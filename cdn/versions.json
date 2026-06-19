@@ -1,0 +1,9 @@
+{
+  "componentId": "lightbox",
+  "slug": "lightbox-zoom",
+  "repo": "Jeff-Aporta/Personal",
+  "cdnPath": "components/lightbox/cdn",
+  "componentRef": "main",
+  "refExport": "LIGHTBOX_ZOOM_REF",
+  "note": "Pin jsDelivr Personal@componentRef. Actualizar con sync-component-refs.mjs --from-git --component lightbox"
+}

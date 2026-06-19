@@ -1,0 +1,40 @@
+{
+  "slug": "lightbox-zoom",
+  "meta": {
+    "title": "Lightbox Zoom — ISA Components",
+    "applicationName": "Lightbox Zoom",
+    "description": "Documentación, API y ejemplos del visor lightbox-zoom (@isa-components).",
+    "keywords": "lightbox, zoom, imagen, galería, MUI, isa-components, Jeff-Aporta",
+    "themeColor": "#1565c0",
+    "themeLsKey": "isa-components:lightbox-zoom:theme",
+    "icon": "mdi:image-filter-center-focus",
+    "canonical": "https://jeff-aporta.github.io/lightbox-zoom/",
+    "ogSiteName": "Jeff-Aporta — ISA Components",
+    "ogTitle": "Lightbox Zoom — ISA Components",
+    "imageAlt": "Demo lightbox-zoom con zoom, pan y galería"
+  },
+  "frontSharedPin": "a5a6597",
+  "useDist": true,
+  "importMap": false,
+  "fonts": true,
+  "loader": "mjs-module",
+  "themeInit": true,
+  "appMeta": false,
+  "headIndent": "  ",
+  "viewport": "width=device-width, initial-scale=1",
+  "styles": [
+    "shared-base",
+    "local:css/demo.css"
+  ],
+  "componentStyles": [
+    "cdn/lightbox-zoom.min.css"
+  ],
+  "preconnect": [
+    "https://cdn.jsdelivr.net",
+    "https://code.iconify.design"
+  ],
+  "libs": [
+    "iconify",
+    "loader-mjs"
+  ]
+}

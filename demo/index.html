@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/gh/Jeff-Aporta/front-shared@a5a6597/cdn/base-href.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lightbox Zoom — ISA Components</title>
+  <meta name="description" content="Documentación, API y ejemplos del visor lightbox-zoom (@isa-components)." />
+  <meta name="keywords" content="lightbox, zoom, imagen, galería, MUI, isa-components, Jeff-Aporta" />
+  <meta name="application-name" content="Lightbox Zoom" />
+  <meta name="theme-color" content="#1565c0" />
+  <meta name="app-theme-ls-key" content="isa-components:lightbox-zoom:theme" />
+  <meta name="app-icon" content="mdi:image-filter-center-focus" />
+  <link rel="canonical" href="https://jeff-aporta.github.io/lightbox-zoom/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CO" />
+  <meta property="og:site_name" content="Jeff-Aporta — ISA Components" />
+  <meta property="og:title" content="Lightbox Zoom — ISA Components" />
+  <meta property="og:description" content="Documentación, API y ejemplos del visor lightbox-zoom (@isa-components)." />
+  <meta property="og:url" content="https://jeff-aporta.github.io/lightbox-zoom/" />
+  <meta property="og:image" content="https://api.iconify.design/mdi/image-filter-center-focus.svg?color=%231565c0&width=512&height=512" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="Demo lightbox-zoom con zoom, pan y galería" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Lightbox Zoom — ISA Components" />
+  <meta name="twitter:description" content="Documentación, API y ejemplos del visor lightbox-zoom (@isa-components)." />
+  <meta name="twitter:image" content="https://api.iconify.design/mdi/image-filter-center-focus.svg?color=%231565c0&width=512&height=512" />
+  <meta name="twitter:image:alt" content="Demo lightbox-zoom con zoom, pan y galería" />
+  <link rel="icon" href="https://api.iconify.design/mdi/image-filter-center-focus.svg?color=%231565c0&width=32&height=32" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="https://api.iconify.design/mdi/image-filter-center-focus.svg?color=%231565c0&width=180&height=180" />
+  <script>
+    (function () {
+      var k = "isa-components:lightbox-zoom:theme";
+      var m = "dark";
+      try {
+        var v = localStorage.getItem(k);
+        if (v === "light" || v === "dark") m = v;
+      } catch (e) { /* ignore */ }
+      document.documentElement.setAttribute("data-mui-color-scheme", m);
+      document.documentElement.style.colorScheme = m;
+    })();
+  </script>
+  <script>window.__ISA_DIST__=true;</script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://code.iconify.design" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jeff-Aporta/front-shared@a5a6597/cdn/isa/css/base.css" />
+  <link rel="stylesheet" href="_dist/css/demo.css" />
+  <link rel="stylesheet" href="cdn/lightbox-zoom.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.9/babel.min.js"></script>
+  <script defer src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script type="module" src="_dist/js/boot/loader.mjs"></script>
+</head>
+
+<body>
+  <div id="root">
+    <style>
+      html {
+        color-scheme: dark;
+        background: #060d18;
+      }
+
+      html[data-mui-color-scheme="light"] {
+        color-scheme: light;
+        background: #eef4ff;
+      }
+
+      html[data-mui-color-scheme="light"] .isa-app-boot {
+        background: #eef4ff;
+        color: #64748b;
+      }
+
+      html[data-mui-color-scheme="light"] .isa-app-boot-shimmer iconify-icon {
+        color: #64748b;
+      }
+
+      html[data-mui-color-scheme="light"] .isa-app-boot-shimmer > span {
+        background: linear-gradient(100deg, #64748b 0%, #64748b 38%, rgba(30, 144, 255, 0.55) 46%, #1e90ff 50%, #4aa3ff 53%, rgba(0, 180, 220, 0.65) 57%, #64748b 64%, #64748b 100%);
+        background-size: 240% 100%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+
+      html[data-mui-color-scheme="light"] .isa-app-boot-shimmer::after {
+        mix-blend-mode: soft-light;
+        opacity: 0.9;
+      }
+
+      body {
+        margin: 0;
+        height: 100%;
+        background: inherit;
+      }
+
+      #root {
+        height: 100%;
+        min-height: 100vh;
+      }
+
+      .isa-app-boot {
+        height: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        background: #060d18;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        letter-spacing: 0.01em;
+      }
+
+      .isa-app-boot-shimmer {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        position: relative;
+        isolation: isolate;
+        z-index: 1;
+      }
+
+      .isa-app-boot-shimmer iconify-icon {
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+
+      .isa-app-boot-shimmer > span {
+        font-weight: 500;
+        background: linear-gradient(100deg, #94a3b8 0%, #94a3b8 38%, rgba(30, 144, 255, 0.45) 46%, #1e90ff 50%, #63b3ff 53%, rgba(0, 229, 255, 0.5) 57%, #94a3b8 64%, #94a3b8 100%);
+        background-size: 240% 100%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        animation: isa-boot-text-shimmer 2.6s ease-in-out infinite;
+      }
+
+      .isa-app-boot-shimmer::after {
+        content: "";
+        position: absolute;
+        inset: -3px -6px;
+        z-index: 1;
+        pointer-events: none;
+        border-radius: 6px;
+        background: linear-gradient(100deg, transparent 0%, transparent 36%, rgba(30, 144, 255, 0.22) 44%, rgba(30, 144, 255, 0.62) 50%, rgba(99, 179, 255, 0.52) 54%, rgba(0, 229, 255, 0.38) 58%, transparent 66%, transparent 100%);
+        background-size: 240% 100%;
+        animation: isa-boot-text-shimmer 2.6s ease-in-out infinite;
+        mix-blend-mode: screen;
+        opacity: 0.82;
+      }
+
+      .isa-app-boot-watermark {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        width: min(150px, 20%);
+        height: auto;
+        opacity: 0.5;
+        filter: invert(0.5);
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
+      }
+
+      @keyframes isa-boot-text-shimmer {
+        0% { background-position: 115% 50%; }
+        100% { background-position: -15% 50%; }
+      }
+    </style>
+    <div class="isa-app-boot">
+      <div class="isa-app-boot-shimmer">
+        <iconify-icon icon="mdi:image-filter-center-focus" width="1.5em" height="1.5em"></iconify-icon>
+        <span>Cargando Lightbox Zoom…</span>
+      </div>
+      <img class="isa-app-boot-watermark" src="https://pub-1c290cc606c8478899f5764899278571.r2.dev/brand/logo-insoft.png" alt="" aria-hidden="true" decoding="async" />
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,70 +1,20 @@
-/* Demo lightbox-zoom — identidad ISA (front-shared base.css) */
-.isa-lb-demo {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.isa-lb-demo__header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-}
-
-.isa-lb-demo__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.isa-lb-demo__badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-  background: rgba(21, 101, 192, 0.18);
-  color: #64b5f6;
-}
-
-.isa-lb-demo__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
+/* Contenido demo — AppShell + theme.css aportan layout e identidad ISA */
 .isa-lb-demo__main {
-  flex: 1;
   max-width: 960px;
   width: 100%;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+  box-sizing: border-box;
 }
 
 .isa-lb-demo__section-title {
-  font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.02em;
   margin-bottom: 0.35rem;
 }
 
-.isa-lb-demo__card {
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 23, 42, 0.35);
+.isa-lb-demo__main .tool-panel {
   padding: 1.25rem;
   margin-bottom: 1.25rem;
-}
-
-html[data-mui-color-scheme="light"] .isa-lb-demo__card {
-  background: rgba(255, 255, 255, 0.72);
-  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .isa-lb-demo__gallery {
@@ -86,21 +36,22 @@ html[data-mui-color-scheme="light"] .isa-lb-demo__card {
   font-family: ui-monospace, monospace;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(30, 144, 255, 0.22);
+  background: rgba(30, 144, 255, 0.06);
 }
 
-.isa-lb-demo pre {
+.isa-lb-demo__main pre {
   overflow: auto;
   font-size: 0.78rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(6, 13, 24, 0.45);
+  border: 1px solid rgba(30, 144, 255, 0.18);
 }
 
-html[data-mui-color-scheme="light"] .isa-lb-demo pre {
-  background: rgba(15, 23, 42, 0.04);
+html[data-mui-color-scheme="light"] .isa-lb-demo__main pre {
+  background: rgba(240, 247, 255, 0.85);
+  border-color: rgba(30, 144, 255, 0.14);
 }
 
 .isa-lb-demo__thumb-row img {

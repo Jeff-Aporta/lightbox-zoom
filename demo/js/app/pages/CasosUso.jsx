@@ -14,7 +14,7 @@ export function CasosUsoPage() {
     React.createElement(Typography, { variant: "h4", className: "isa-lb-demo__section-title", gutterBottom: true }, "Casos de uso"),
     React.createElement(
       List,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       ...CASOS.map((c) =>
         React.createElement(
           ListItem,

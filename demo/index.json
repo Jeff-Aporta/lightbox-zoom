@@ -5,7 +5,7 @@
     "applicationName": "Lightbox Zoom",
     "description": "Documentación, API y ejemplos del visor lightbox-zoom (@jeff-aporta).",
     "keywords": "lightbox, zoom, imagen, galería, MUI, jeff-aporta, CDN",
-    "themeColor": "#1565c0",
+    "themeColor": "#1e90ff",
     "themeLsKey": "jeff-aporta:lightbox-zoom:theme",
     "icon": "mdi:image-filter-center-focus",
     "canonical": "https://jeff-aporta.github.io/lightbox-zoom/",
@@ -16,7 +16,7 @@
   "frontSharedPin": "a5a6597",
   "useDist": true,
   "importMap": true,
-  "fonts": true,
+  "fonts": false,
   "loader": "mjs-module",
   "themeInit": true,
   "appMeta": false,
@@ -24,6 +24,7 @@
   "viewport": "width=device-width, initial-scale=1",
   "styles": [
     "shared-base",
+    "local:css/theme.css",
     "local:css/demo.css"
   ],
   "componentStyles": [

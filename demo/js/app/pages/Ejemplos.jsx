@@ -17,7 +17,7 @@ export function EjemplosPage() {
     React.createElement(Typography, { variant: "h4", className: "isa-lb-demo__section-title", gutterBottom: true }, "Ejemplos"),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Miniatura"),
       React.createElement(
         Box,
@@ -28,7 +28,7 @@ export function EjemplosPage() {
     ),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Grid"),
       React.createElement(
         Box,
@@ -44,7 +44,7 @@ export function EjemplosPage() {
     ),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Dialog programático"),
       React.createElement(
         "button",

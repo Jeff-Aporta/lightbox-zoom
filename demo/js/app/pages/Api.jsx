@@ -52,7 +52,7 @@ export function ApiPage() {
     ),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel", sx: { overflow: "hidden", mb: 2 } },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "CDN (sin bundlear front-shared)"),
       React.createElement(
         "pre",

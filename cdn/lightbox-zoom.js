@@ -868,6 +868,54 @@ function useLightboxZoom(open, slideKey) {
   };
 }
 
+function GalleryDots({ count, index, onSelect }) {
+  const { Box } = getMaterialUI();
+  if (count <= 1) return null;
+
+  return React.createElement(
+    Box,
+    {
+      className: "isa-lb-zoom__gallery-dots",
+      role: "tablist",
+      "aria-label": "Posición en galería",
+      sx: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.75,
+        height: 32,
+        flexShrink: 0,
+      },
+    },
+    Array.from({ length: count }, (_, i) =>
+      React.createElement(Box, {
+        key: i,
+        component: "button",
+        type: "button",
+        role: "tab",
+        "aria-selected": i === index,
+        "aria-label": `Imagen ${i + 1} de ${count}`,
+        onClick: () => onSelect(i),
+        className: i === index ? "isa-lb-zoom__gallery-dot isa-lb-zoom__gallery-dot--active" : "isa-lb-zoom__gallery-dot",
+        sx: (theme) => ({
+          width: 7,
+          height: 7,
+          p: 0,
+          border: "none",
+          borderRadius: "50%",
+          cursor: "pointer",
+          flexShrink: 0,
+          bgcolor: i === index ? theme.palette.primary.main : "rgba(255,255,255,0.35)",
+          transition: "background-color 0.2s ease, transform 0.2s ease",
+          transform: i === index ? "scale(1.15)" : "scale(1)",
+          "&:hover": {
+            bgcolor: i === index ? theme.palette.primary.light : "rgba(255,255,255,0.55)",
+          },
+        }),
+      }),
+    ),
+  );
+}
+
   function LightboxZoomDialog({
     ns,
     open,
@@ -909,6 +957,10 @@ function useLightboxZoom(open, slideKey) {
 
     const goNext = useCallback(() => {
       setIndex((i) => (i + 1) % slides.length);
+    }, [slides.length]);
+
+    const goToSlide = useCallback((i) => {
+      setIndex(((i % slides.length) + slides.length) % slides.length);
     }, [slides.length]);
 
     const prevHold = useHoldRepeat(goPrev, !hasNav);
@@ -970,34 +1022,50 @@ function useLightboxZoom(open, slideKey) {
         { sx: { position: "relative", display: "flex", flexDirection: "column", width: "100%" } },
         React.createElement(
           Box,
-          { className: "isa-lb-zoom__toolbar" },
+          {
+            className: "isa-lb-zoom__toolbar",
+            sx: {
+              alignSelf: "stretch",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+              width: "100%",
+            },
+          },
+          hasNav
+            ? React.createElement(GalleryDots, { count: slides.length, index, onSelect: goToSlide })
+            : React.createElement(Box, { sx: { flex: "1 1 auto", minWidth: 0 } }),
           React.createElement(
-            Stack,
-            { direction: "row", spacing: 0.5, alignItems: "center", sx: { height: 32 } },
+            Box,
+            { sx: { display: "inline-flex", alignItems: "center", gap: 0.5, flexShrink: 0 } },
+            React.createElement(
+              Stack,
+              { direction: "row", spacing: 0.5, alignItems: "center", sx: { height: 32 } },
+              React.createElement(IconButton, {
+                type: "button", title: "Alejar (Ctrl + rueda ↓)", "aria-label": "Alejar",
+                disabled: zoom <= ZOOM_MIN, sx: toolbarBtnSx, size: "small",
+                ...zoomOutHold,
+              }, React.createElement(Icon, { icon: "mdi:magnify-minus-outline", size: 18 })),
+              React.createElement(Box, { component: "span", className: "isa-lb-zoom__zoom-label" }, Math.round(zoom * 100) + "%"),
+              React.createElement(IconButton, {
+                type: "button", title: "Acercar (Ctrl + rueda ↑)", "aria-label": "Acercar",
+                disabled: zoom >= ZOOM_MAX, sx: toolbarBtnSx, size: "small",
+                ...zoomInHold,
+              }, React.createElement(Icon, { icon: "mdi:magnify-plus-outline", size: 18 })),
+              React.createElement(IconButton, {
+                type: "button", title: "Restablecer (Ctrl 0)", "aria-label": "Restablecer vista",
+                onClick: resetView, disabled: zoom <= 1 && pan.x === 0 && pan.y === 0, sx: toolbarBtnSx, size: "small",
+              }, React.createElement(Icon, { icon: "mdi:fit-to-screen-outline", size: 18 })),
+            ),
+            React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
+            React.createElement(LightboxZoomPanPad, { canPan, panBy, Icon }),
+            React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
             React.createElement(IconButton, {
-              type: "button", title: "Alejar (Ctrl + rueda ↓)", "aria-label": "Alejar",
-              disabled: zoom <= ZOOM_MIN, sx: toolbarBtnSx, size: "small",
-              ...zoomOutHold,
-            }, React.createElement(Icon, { icon: "mdi:magnify-minus-outline", size: 18 })),
-            React.createElement(Box, { component: "span", className: "isa-lb-zoom__zoom-label" }, Math.round(zoom * 100) + "%"),
-            React.createElement(IconButton, {
-              type: "button", title: "Acercar (Ctrl + rueda ↑)", "aria-label": "Acercar",
-              disabled: zoom >= ZOOM_MAX, sx: toolbarBtnSx, size: "small",
-              ...zoomInHold,
-            }, React.createElement(Icon, { icon: "mdi:magnify-plus-outline", size: 18 })),
-            React.createElement(IconButton, {
-              type: "button", title: "Restablecer (Ctrl 0)", "aria-label": "Restablecer vista",
-              onClick: resetView, disabled: zoom <= 1 && pan.x === 0 && pan.y === 0, sx: toolbarBtnSx, size: "small",
-            }, React.createElement(Icon, { icon: "mdi:fit-to-screen-outline", size: 18 })),
-            hasNav ? React.createElement(Box, { component: "span", className: "isa-lb-zoom__slide-label" }, (index + 1) + " / " + slides.length) : null,
+              type: "button", title: "Cerrar", "aria-label": "Cerrar imagen",
+              onClick: onClose, sx: toolbarBtnSx, size: "small",
+            }, React.createElement(Icon, { icon: "mdi:close", size: 18 })),
           ),
-          React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
-          React.createElement(LightboxZoomPanPad, { canPan, panBy, Icon }),
-          React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
-          React.createElement(IconButton, {
-            type: "button", title: "Cerrar", "aria-label": "Cerrar imagen",
-            onClick: onClose, sx: toolbarBtnSx, size: "small",
-          }, React.createElement(Icon, { icon: "mdi:close", size: 18 })),
         ),
         React.createElement(
           Box,

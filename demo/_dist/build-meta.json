@@ -1,28 +1,33 @@
 {
-  "builtAt": "2026-06-19T04:14:44.014Z",
+  "builtAt": "2026-06-19T04:32:12.642Z",
   "kind": "component-demo",
   "demoRoot": "..\\..\\..\\components\\lightbox\\demo",
-  "files": 4,
-  "bytesIn": 6532,
-  "bytesOut": 12259,
-  "ratio": 1.877,
-  "hash": "dc7072d90a0b",
+  "files": 5,
+  "bytesIn": 8723,
+  "bytesOut": 12878,
+  "ratio": 1.476,
+  "hash": "af8f3ca0977f",
   "appBundle": "_dist/app.min.js",
   "entries": [
     {
       "rel": "js\\app\\main.jsx",
       "bytesIn": 144,
-      "bytesOut": 7776
+      "bytesOut": 6619
     },
     {
       "rel": "css/demo.css",
-      "bytesIn": 2345,
-      "bytesOut": 1802
+      "bytesIn": 1305,
+      "bytesOut": 976
+    },
+    {
+      "rel": "css/theme.css",
+      "bytesIn": 3077,
+      "bytesOut": 2486
     },
     {
       "rel": "js/boot/loader.mjs",
-      "bytesIn": 1117,
-      "bytesOut": 793
+      "bytesIn": 1271,
+      "bytesOut": 909
     },
     {
       "rel": "js/boot/cdn.mjs",

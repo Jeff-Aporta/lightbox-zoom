@@ -15,7 +15,7 @@ export function IntroPage() {
     ),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Identidad del paquete"),
       React.createElement(
         Stack,
@@ -27,7 +27,7 @@ export function IntroPage() {
     ),
     React.createElement(
       Box,
-      { className: "isa-lb-demo__card" },
+      { className: "tool-panel" },
       React.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Vista previa"),
       React.createElement(
         Box,

@@ -1,6 +1,6 @@
 {
   "private": true,
-  "description": "Visor lightbox con zoom, pan y galería — distribución CDN @jeff-aporta",
+  "description": "Visor lightbox con zoom, pan y galería",
   "scripts": {
     "build": "node scripts/build.mjs"
   }

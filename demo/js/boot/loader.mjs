@@ -3,13 +3,17 @@ import { bootHelperUrl, ensureLightboxZoom, demoAppUrl } from "./cdn.mjs";
 async function boot() {
   if (new URLSearchParams(location.search).has("isa_boot_hold")) return;
 
-  const { importShared, assertStack } = await import(bootHelperUrl);
+  const { importShared, assertStack, loadSharedUi } = await import(bootHelperUrl);
 
   const stackMod = await importShared("stack.mjs");
   await stackMod.stackReady;
   assertStack();
 
+  const Babel = globalThis.Babel;
+  if (!Babel?.transform) throw new Error("Babel standalone no cargó");
+
   await importShared("isa/js/index.js");
+  await loadSharedUi(Babel);
 
   window.ISAFront.registerApp({
     ns: "ISA",

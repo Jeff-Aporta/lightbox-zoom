@@ -4,10 +4,12 @@
 }
 
 .isa-lb-zoom__toolbar {
-  align-self: flex-end;
-  display: inline-flex;
+  align-self: stretch;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
+  width: 100%;
   margin-bottom: 0.65rem;
   padding: 0.35rem 0.5rem;
   border-radius: 12px;
@@ -16,6 +18,35 @@
   user-select: none;
   -webkit-user-select: none;
   z-index: 3;
+}
+
+.isa-lb-zoom__gallery-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.isa-lb-zoom__gallery-dot {
+  appearance: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.isa-lb-zoom__gallery-dot:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.isa-lb-zoom__gallery-dot--active {
+  transform: scale(1.15);
+}
+
+.isa-lb-zoom__gallery-dot--active:hover {
+  filter: brightness(1.08);
 }
 
 .isa-lb-zoom__toolbar-divider {

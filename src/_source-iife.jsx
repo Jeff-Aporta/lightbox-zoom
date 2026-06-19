@@ -452,7 +452,7 @@ function PanPad({ canPan, panBy, Icon }) {
         transition: "opacity 0.2s ease",
       },
     },
-    btn("Arriba (Ctrl ↑)", "mdi:chevron-up", () => panBy(0, -PAN_STEP), {
+    btn("Arriba (Ctrl ↑)", "mdi:chevron-up", () => panBy(0, PAN_STEP), {
       top: 0,
       left: "50%",
       transform: "translateX(-50%)",
@@ -470,7 +470,7 @@ function PanPad({ canPan, panBy, Icon }) {
       transform: "translateY(-50%)",
       position: "absolute",
     }),
-    btn("Abajo (Ctrl ↓)", "mdi:chevron-down", () => panBy(0, PAN_STEP), {
+    btn("Abajo (Ctrl ↓)", "mdi:chevron-down", () => panBy(0, -PAN_STEP), {
       bottom: 0,
       left: "50%",
       transform: "translateX(-50%)",
@@ -980,8 +980,8 @@ function GalleryDots({ count, index, onSelect }) {
           if (e.key === "0") { e.preventDefault(); resetView(); return; }
           if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomIn(); return; }
           if (e.key === "-") { e.preventDefault(); zoomOut(); return; }
-          if (e.key === "ArrowUp") { e.preventDefault(); panBy(0, -PAN_STEP); return; }
-          if (e.key === "ArrowDown") { e.preventDefault(); panBy(0, PAN_STEP); return; }
+          if (e.key === "ArrowUp") { e.preventDefault(); panBy(0, PAN_STEP); return; }
+          if (e.key === "ArrowDown") { e.preventDefault(); panBy(0, -PAN_STEP); return; }
           if (e.key === "ArrowLeft") { e.preventDefault(); panBy(PAN_STEP, 0); return; }
           if (e.key === "ArrowRight") { e.preventDefault(); panBy(-PAN_STEP, 0); return; }
           return;

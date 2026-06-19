@@ -10,7 +10,7 @@ export function IntroPage() {
       Typography,
       { variant: "body1", color: "text.secondary", paragraph: true },
       "Lightbox Zoom es la primera librería de ",
-      React.createElement("strong", null, "@isa-components"),
+      React.createElement("strong", null, "@jeff-aporta"),
       ": un visor modal reutilizable para imágenes adjuntas, evidencias y galerías en los fronts ISA.",
     ),
     React.createElement(

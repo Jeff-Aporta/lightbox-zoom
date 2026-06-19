@@ -1,5 +1,5 @@
 /**
- * @isa-components/lightbox-zoom — API pública (runtime vía CDN).
+ * @jeff-aporta/lightbox-zoom — API pública (runtime vía CDN).
  *
  * Tras ensureLightboxZoom(): window.ISAComponents.LightboxZoom
  *

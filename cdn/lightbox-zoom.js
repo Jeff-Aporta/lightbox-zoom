@@ -1,5 +1,5 @@
 /**
- * @package @isa-components/lightbox-zoom
+ * @jeff-aporta/lightbox-zoom — CDN
  * Registra window.ISAComponents.LightboxZoom
  */
 (function () {
@@ -1034,7 +1034,12 @@ function useLightboxZoom(open, slideKey) {
             onPointerUp: onPanEnd,
             onPointerCancel: onPanEnd,
             sx: {
-              overflow: "hidden", maxWidth: "100%", maxHeight: "min(78vh, 860px)",
+              overflow: "hidden",
+              width: "100%",
+              minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
+              minHeight: VIEWPORT_MIN_H,
+              maxWidth: "100%",
+              maxHeight: "min(78vh, 860px)",
               display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "center",
               cursor: canPan ? "grab" : "default", userSelect: "none", touchAction: "none",
               "&:active": { cursor: canPan ? "grabbing" : "default" },

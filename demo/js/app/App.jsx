@@ -31,7 +31,7 @@ export function App() {
     document.documentElement.setAttribute("data-mui-color-scheme", next);
     document.documentElement.style.colorScheme = next;
     try {
-      localStorage.setItem("isa-components:lightbox-zoom:theme", next);
+      localStorage.setItem("jeff-aporta:lightbox-zoom:theme", next);
     } catch { /* ignore */ }
     setScheme(next);
   };
@@ -63,7 +63,7 @@ export function App() {
                 Typography,
                 { variant: "h6", className: "isa-lb-demo__brand", component: "div", sx: { lineHeight: 1.2 } },
                 "Lightbox Zoom",
-                React.createElement(Box, { component: "span", className: "isa-lb-demo__badge", sx: { ml: 1 } }, "isa-components"),
+                React.createElement(Box, { component: "span", className: "isa-lb-demo__badge", sx: { ml: 1 } }, "jeff-aporta"),
               ),
               React.createElement(Typography, { variant: "caption", color: "text.secondary" }, "Visor con zoom, pan y galería para fronts ISA"),
             ),

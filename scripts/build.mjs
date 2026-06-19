@@ -21,7 +21,7 @@ function transformSource(raw) {
   let s = raw;
   s = s.replace(
     /\/\*\*[\s\S]*?\*\/\s*\(function \(\)/,
-    `/**\n * @package @isa-components/lightbox-zoom\n * Registra window.ISAComponents.LightboxZoom\n */\n(function ()`,
+    `/**\n * @jeff-aporta/lightbox-zoom — CDN\n * Registra window.ISAComponents.LightboxZoom\n */\n(function ()`,
   );
   s = s.replace(/conv-image-lightbox/g, "isa-lb-zoom");
   s = s.replace(/function useImageLightboxZoom\(/g, "function useLightboxZoom(");
@@ -76,7 +76,7 @@ function build() {
 
   let css = readFileSync(CSS_IN, "utf8");
   css = css.replace(/conv-image-lightbox/g, "isa-lb-zoom");
-  css = css.replace(/Visor de imágenes compartido \(ISAFront\.Lightbox\)/, "Lightbox zoom — @isa-components/lightbox-zoom");
+  css = css.replace(/Visor de imágenes compartido \(ISAFront\.Lightbox\)/, "Lightbox zoom — @jeff-aporta");
   writeFileSync(CSS_IN, css, "utf8");
   writeFileSync(CDN_CSS, minifyCss(css), "utf8");
 

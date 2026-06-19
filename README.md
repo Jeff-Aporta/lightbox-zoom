@@ -1,6 +1,6 @@
-# @isa-components/lightbox-zoom
+# lightbox-zoom (@jeff-aporta)
 
-Visor de imágenes con zoom, pan y galería para fronts ISA (MUI + React).
+Visor de imágenes con zoom, pan y galería para fronts ISA (MUI + React). Distribución **solo CDN** (jsDelivr + GH Pages).
 
 ## Paquete
 
@@ -8,14 +8,13 @@ Visor de imágenes con zoom, pan y galería para fronts ISA (MUI + React).
 |-----------|------|
 | JS minificado | `cdn/lightbox-zoom.min.js` → `window.ISAComponents.LightboxZoom` |
 | CSS | `cdn/lightbox-zoom.min.css` (prefijo `.isa-lb-zoom`) |
-| Loader | `cdn/load-lightbox-zoom.mjs` |
 
 ## Build
 
 ```bash
 npm run build
 cd ../../apps/src/scripts && npm run gen:component-demo -- --component lightbox
-npm run sync:component-refs -- --from-git   # tras push: actualiza Personal@commit en consumidores
+npm run sync:component-refs -- --from-git   # actualiza LIGHTBOX_ZOOM_REF y URLs en consumidores
 ```
 
 ## Demo
@@ -25,8 +24,12 @@ npm run sync:component-refs -- --from-git   # tras push: actualiza Personal@comm
 
 ## Consumo
 
+En cada front, `js/boot/cdn.mjs` incluye el bloque `@isa-lightbox-boot` (generado/actualizado por `sync-component-refs.mjs`):
+
 ```javascript
-import { ensureLightboxZoom } from ".../components/lightbox/cdn/load-lightbox-zoom.mjs";
+import { ensureLightboxZoom } from "./cdn.mjs";
 await ensureLightboxZoom();
 const { LightboxZoomDialog } = window.ISAComponents.LightboxZoom;
 ```
+
+El pin jsDelivr (`LIGHTBOX_ZOOM_REF`) vive en `cdn/versions.json` y se propaga con `npm run sync:component-refs`.

@@ -1,14 +1,7 @@
 {
-  "name": "@isa-components/lightbox-zoom",
-  "version": "1.0.0",
   "private": true,
-  "description": "Visor de imágenes con zoom, pan y galería — librería ISA Components",
+  "description": "Visor lightbox con zoom, pan y galería — distribución CDN @jeff-aporta",
   "scripts": {
     "build": "node scripts/build.mjs"
-  },
-  "files": [
-    "cdn/",
-    "css/",
-    "src/jsx/"
-  ]
+  }
 }

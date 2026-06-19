@@ -1,4 +1,4 @@
-import { bootHelperUrl, lightboxZoomLoaderUrl, demoAppUrl } from "./cdn.mjs";
+import { bootHelperUrl, ensureLightboxZoom, demoAppUrl } from "./cdn.mjs";
 
 async function boot() {
   if (new URLSearchParams(location.search).has("isa_boot_hold")) return;
@@ -24,7 +24,6 @@ async function boot() {
     window.ISAFront.registerCodeMirror(window.React, window.MaterialUI);
   }
 
-  const { ensureLightboxZoom } = await import(lightboxZoomLoaderUrl());
   await ensureLightboxZoom();
 
   await import(demoAppUrl());

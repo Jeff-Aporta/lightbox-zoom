@@ -18,7 +18,11 @@ export const CSS_CLASS_ROOT = "isa-lb-zoom";
 export const EXPORTS = [
   "LightboxZoomDialog",
   "LightboxZoomImage",
+  "LightboxZoomInline",
+  "LightboxZoomInlineHost",
   "useLightboxZoom",
+  "svgElementToDataUrl",
+  "openLightboxInline",
   "ZOOM_MIN",
   "ZOOM_MAX",
   "PAN_STEP",

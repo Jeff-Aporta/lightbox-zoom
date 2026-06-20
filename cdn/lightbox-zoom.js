@@ -925,6 +925,7 @@ function GalleryDots({ count, index, onSelect }) {
     startIndex = 0,
     alt = "Imagen adjunta",
     className = "isa-lb-zoom",
+    fullPage = false,
   }) {
     const { useState, useEffect, useCallback, useMemo } = getReact();
     const { Box, Dialog, IconButton, Typography, Stack } = getMaterialUI();
@@ -995,23 +996,55 @@ function GalleryDots({ count, index, onSelect }) {
 
     if (!open || !current?.src) return null;
 
+    const bounds = fullPage
+      ? {
+          stageMinH: "calc(100vh - 148px)",
+          viewportMinH: "calc(100vh - 148px)",
+          viewportMaxH: "calc(100vh - 148px)",
+          imgMaxH: "calc(100vh - 148px)",
+        }
+      : {
+          stageMinH: VIEWPORT_MIN_H,
+          viewportMinH: VIEWPORT_MIN_H,
+          viewportMaxH: "min(78vh, 860px)",
+          imgMaxH: "min(78vh, 860px)",
+        };
+
+    const dialogClass = [className, fullPage ? "isa-lb-zoom--fullpage" : ""].filter(Boolean).join(" ");
+
     return React.createElement(
       Dialog,
       {
         open,
         onClose,
         maxWidth: false,
-        className,
+        fullScreen: fullPage,
+        scroll: fullPage ? "paper" : undefined,
+        className: dialogClass,
         PaperProps: {
-          sx: {
-            m: { xs: 1, sm: 2 },
-            maxWidth: "min(96vw, 1200px)",
-            minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
-            width: "100%",
-            bgcolor: "transparent",
-            boxShadow: "none",
-            overflow: "visible",
-          },
+          sx: fullPage
+            ? {
+                m: 0,
+                width: "100%",
+                maxWidth: "100%",
+                height: "100%",
+                maxHeight: "none",
+                borderRadius: 0,
+                bgcolor: "transparent",
+                boxShadow: "none",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }
+            : {
+                m: { xs: 1, sm: 2 },
+                maxWidth: "min(96vw, 1200px)",
+                minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
+                width: "100%",
+                bgcolor: "transparent",
+                boxShadow: "none",
+                overflow: "visible",
+              },
         },
         slotProps: {
           backdrop: { sx: { bgcolor: "rgba(0,0,0,0.88)", backdropFilter: "blur(4px)" } },
@@ -1019,7 +1052,17 @@ function GalleryDots({ count, index, onSelect }) {
       },
       React.createElement(
         Box,
-        { sx: { position: "relative", display: "flex", flexDirection: "column", width: "100%" } },
+        {
+          sx: {
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            ...(fullPage
+              ? { flex: 1, minHeight: 0, height: "100%", px: { xs: 1, sm: 2 }, py: 1, boxSizing: "border-box" }
+              : {}),
+          },
+        },
         React.createElement(
           Box,
           {
@@ -1075,8 +1118,9 @@ function GalleryDots({ count, index, onSelect }) {
               position: "relative",
               width: "100%",
               alignSelf: "center",
-              minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
-              minHeight: VIEWPORT_MIN_H,
+              minWidth: fullPage ? "100%" : `min(${VIEWPORT_MIN_W}px, 96vw)`,
+              minHeight: bounds.stageMinH,
+              ...(fullPage ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } : {}),
             },
           },
           hasNav ? React.createElement(IconButton, {
@@ -1104,12 +1148,13 @@ function GalleryDots({ count, index, onSelect }) {
             sx: {
               overflow: "hidden",
               width: "100%",
-              minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
-              minHeight: VIEWPORT_MIN_H,
+              minWidth: fullPage ? "100%" : `min(${VIEWPORT_MIN_W}px, 96vw)`,
+              minHeight: bounds.viewportMinH,
               maxWidth: "100%",
-              maxHeight: "min(78vh, 860px)",
+              maxHeight: bounds.viewportMaxH,
               display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "center",
               cursor: canPan ? "grab" : "default", userSelect: "none", touchAction: "none",
+              ...(fullPage ? { flex: 1, minHeight: 0 } : {}),
               "&:active": { cursor: canPan ? "grabbing" : "default" },
             },
           },
@@ -1117,7 +1162,7 @@ function GalleryDots({ count, index, onSelect }) {
             ref: imgRef, component: "img", src: current.src, alt: current.alt ?? "",
             draggable: false, onLoad: onImgLoad,
             sx: {
-              display: "block", maxWidth: "100%", maxHeight: "min(78vh, 860px)",
+              display: "block", maxWidth: "100%", maxHeight: bounds.imgMaxH,
               width: "auto", height: "auto", borderRadius: 0.5,
               boxShadow: "0 24px 80px rgba(0,0,0,0.55)", transformOrigin: "center center",
             },
@@ -1131,6 +1176,127 @@ function GalleryDots({ count, index, onSelect }) {
         ) : null,
       ),
     );
+  }
+
+  function svgElementToDataUrl(svgEl, opts) {
+    if (!svgEl) return "";
+    const clone = svgEl.cloneNode(true);
+    if (!clone.getAttribute("xmlns")) {
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    }
+    if (opts && opts.bg) {
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("width", "100%");
+      bg.setAttribute("height", "100%");
+      bg.setAttribute("fill", opts.bg);
+      clone.insertBefore(bg, clone.firstChild);
+    }
+    const serialized = new XMLSerializer().serializeToString(clone);
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+  }
+
+  function openLightboxInline(opts) {
+    const d = opts || {};
+    let src = d.src || "";
+    if (!src && d.root) {
+      const svg = d.root.querySelector ? d.root.querySelector("svg") : null;
+      src = svgElementToDataUrl(svg, d);
+    }
+    if (!src) return;
+    document.dispatchEvent(new CustomEvent("isa-lb-zoom-inline-open", {
+      detail: Object.assign({}, d, { src: src }),
+    }));
+  }
+
+  function LightboxZoomInline({
+    ns,
+    children,
+    caption,
+    alt,
+    className,
+    sx,
+    fullPage = false,
+  }) {
+    const { useState, useRef, useCallback } = getReact();
+    const { Box } = getMaterialUI();
+    const UI = resolveUi(ns);
+    const containerRef = useRef(null);
+    const [open, setOpen] = useState(false);
+    const [slides, setSlides] = useState([]);
+
+    const onExpand = useCallback(function () {
+      const svg = containerRef.current && containerRef.current.querySelector("svg");
+      if (!svg) return;
+      const src = svgElementToDataUrl(svg);
+      setSlides([{ src: src, alt: alt || caption || "Diagrama", caption: caption }]);
+      setOpen(true);
+    }, [alt, caption]);
+
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(
+        Box,
+        {
+          ref: containerRef,
+          className: "isa-lb-zoom-inline " + (className || ""),
+          sx: Object.assign({ position: "relative" }, sx || {}),
+        },
+        children,
+        React.createElement(
+          Box,
+          {
+            className: "isa-lb-zoom-inline__expand",
+            role: "button",
+            tabIndex: 0,
+            "aria-label": "Ampliar diagrama",
+            title: "Ampliar (zoom/pan)",
+            onClick: onExpand,
+            onKeyDown: function (e) {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onExpand();
+              }
+            },
+          },
+          React.createElement(UI.Icon, { icon: "mdi:arrow-expand", size: 18 }),
+        ),
+      ),
+      React.createElement(LightboxZoomDialog, {
+        ns: ns,
+        open: open,
+        onClose: function () { setOpen(false); },
+        slides: slides,
+        alt: alt,
+        fullPage: fullPage,
+      }),
+    );
+  }
+
+  function LightboxZoomInlineHost({ ns }) {
+    const { useState, useEffect } = getReact();
+    const [state, setState] = useState({ open: false, slides: [], ns: ns || "ISA" });
+
+    useEffect(function () {
+      function onOpen(e) {
+        const d = e.detail || {};
+        if (!d.src) return;
+        setState({
+          open: true,
+          slides: [{ src: d.src, alt: d.alt || d.caption || "Diagrama", caption: d.caption }],
+          ns: d.ns || ns || "ISA",
+        });
+      }
+      document.addEventListener("isa-lb-zoom-inline-open", onOpen);
+      return function () { document.removeEventListener("isa-lb-zoom-inline-open", onOpen); };
+    }, [ns]);
+
+    return React.createElement(LightboxZoomDialog, {
+      ns: state.ns,
+      open: state.open,
+      onClose: function () { setState(function (s) { return Object.assign({}, s, { open: false }); }); },
+      slides: state.slides,
+    });
   }
 
   function LightboxZoomImage({
@@ -1204,7 +1370,11 @@ function GalleryDots({ count, index, onSelect }) {
   globalThis.ISAComponents.LightboxZoom = {
     LightboxZoomDialog,
     LightboxZoomImage,
+    LightboxZoomInline,
+    LightboxZoomInlineHost,
     useLightboxZoom,
+    svgElementToDataUrl,
+    openLightboxInline,
     ZOOM_MIN,
     ZOOM_MAX,
     PAN_STEP,

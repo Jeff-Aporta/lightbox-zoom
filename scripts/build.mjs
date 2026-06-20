@@ -38,7 +38,11 @@ function transformSource(raw) {
   globalThis.ISAComponents.LightboxZoom = {
     LightboxZoomDialog,
     LightboxZoomImage,
+    LightboxZoomInline,
+    LightboxZoomInlineHost,
     useLightboxZoom,
+    svgElementToDataUrl,
+    openLightboxInline,
     ZOOM_MIN,
     ZOOM_MAX,
     PAN_STEP,

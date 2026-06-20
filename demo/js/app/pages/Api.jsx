@@ -3,6 +3,9 @@ const { Typography, Box, Table, TableBody, TableCell, TableHead, TableRow, Paper
 const PROPS = [
   ["LightboxZoomDialog", "open, onClose, src | slides, startIndex, alt, ns", "Modal con toolbar"],
   ["LightboxZoomImage", "src, alt, gallery, variant, thumbSize, ns", "Trigger + dialog"],
+  ["LightboxZoomInline", "children, caption, alt, ns", "Contenedor inline → SVG/data URL + zoom"],
+  ["openLightboxInline", "{ src | root, caption, alt, ns }", "Abrir modal desde SVG custom"],
+  ["svgElementToDataUrl", "svgEl, { bg }", "Serializa SVG a data URL"],
   ["useLightboxZoom", "open, slideKey", "Hook zoom/pan custom"],
 ];
 

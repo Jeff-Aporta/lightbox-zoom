@@ -146,3 +146,46 @@
     right: 12px;
   }
 }
+
+.isa-lb-zoom-inline__expand {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(30, 144, 255, 0.35);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 16px rgba(30, 144, 255, 0.2);
+  opacity: 0.55;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.isa-lb-zoom-inline:hover .isa-lb-zoom-inline__expand,
+.isa-lb-zoom-inline__expand:focus-visible {
+  opacity: 1;
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(30, 144, 255, 0.35);
+}
+
+html[data-mui-color-scheme="light"] .isa-lb-zoom-inline__expand {
+  color: #0b2e4e;
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(30, 144, 255, 0.22);
+}
+
+.isa-lb-zoom--fullpage .isa-lb-zoom__stage,
+.isa-lb-zoom--fullpage .isa-lb-zoom__viewport {
+  min-width: 100%;
+}
+
+.isa-lb-zoom--fullpage .MuiDialog-container {
+  align-items: stretch;
+}

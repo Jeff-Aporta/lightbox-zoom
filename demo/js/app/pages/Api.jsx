@@ -57,8 +57,8 @@ export function ApiPage() {
       React.createElement(
         "pre",
         null,
-        `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@1d8119f/cdn/lightbox-zoom.min.css" />
-<script defer src="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@1d8119f/cdn/lightbox-zoom.min.js"></script>`,
+        `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@f4fba38/cdn/lightbox-zoom.min.css" />
+<script defer src="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@f4fba38/cdn/lightbox-zoom.min.js"></script>`,
       ),
     ),
   );

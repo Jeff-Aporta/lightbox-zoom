@@ -980,8 +980,8 @@ function GalleryDots({ count, index, onSelect }) {
           if (e.key === "0") { e.preventDefault(); resetView(); return; }
           if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomIn(); return; }
           if (e.key === "-") { e.preventDefault(); zoomOut(); return; }
-          if (e.key === "ArrowUp") { e.preventDefault(); panBy(0, -PAN_STEP); return; }
-          if (e.key === "ArrowDown") { e.preventDefault(); panBy(0, PAN_STEP); return; }
+          if (e.key === "ArrowUp") { e.preventDefault(); panBy(0, PAN_STEP); return; }
+          if (e.key === "ArrowDown") { e.preventDefault(); panBy(0, -PAN_STEP); return; }
           if (e.key === "ArrowLeft") { e.preventDefault(); panBy(PAN_STEP, 0); return; }
           if (e.key === "ArrowRight") { e.preventDefault(); panBy(-PAN_STEP, 0); return; }
           return;

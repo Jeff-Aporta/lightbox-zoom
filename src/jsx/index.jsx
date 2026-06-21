@@ -20,10 +20,13 @@ export const EXPORTS = [
   "LightboxZoomImage",
   "LightboxZoomInline",
   "LightboxZoomInlineHost",
+  "LightboxZoomStage",
   "useLightboxZoom",
+  "useStageTransform",
   "svgElementToDataUrl",
   "openLightboxInline",
   "ZOOM_MIN",
   "ZOOM_MAX",
   "PAN_STEP",
+  "STAGE_SPOT_ZOOM",
 ];

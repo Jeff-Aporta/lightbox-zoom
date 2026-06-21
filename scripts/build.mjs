@@ -1,7 +1,7 @@
 /**
- * Build lightbox-zoom: IIFE minificado para CDN + CSS con prefijo isa-lb-zoom.
+ * Build lightbox-zoom: bundle modular src → IIFE CDN + CSS.
  */
-import { readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import { readFileSync, writeFileSync, renameSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -9,50 +9,18 @@ import { createRequire } from "node:module";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const require = createRequire(import.meta.url);
-const esbuild = require("../../../apps/src/scripts/node_modules/esbuild");
+const esbuild = require("esbuild");
 
-const SOURCE = join(root, "src", "_source-iife.jsx");
+const ENTRY = join(root, "src", "entry-iife.jsx");
+const LEGACY = join(root, "src", "_source-iife.legacy.jsx");
+const OLD_SOURCE = join(root, "src", "_source-iife.jsx");
 const CSS_IN = join(root, "css", "lightbox-zoom.css");
 const CDN_JS = join(root, "cdn", "lightbox-zoom.js");
 const CDN_MIN = join(root, "cdn", "lightbox-zoom.min.js");
 const CDN_CSS = join(root, "cdn", "lightbox-zoom.min.css");
 
-function transformSource(raw) {
-  let s = raw;
-  s = s.replace(
-    /\/\*\*[\s\S]*?\*\/\s*\(function \(\)/,
-    `/**\n * @jeff-aporta/lightbox-zoom — CDN\n * Registra window.ISAComponents.LightboxZoom\n */\n(function ()`,
-  );
-  s = s.replace(/conv-image-lightbox/g, "isa-lb-zoom");
-  s = s.replace(/function useImageLightboxZoom\(/g, "function useLightboxZoom(");
-  s = s.replace(/useImageLightboxZoom\(/g, "useLightboxZoom(");
-  s = s.replace(/function ImageLightboxDialog\(/g, "function LightboxZoomDialog(");
-  s = s.replace(/function LightboxImage\(/g, "function LightboxZoomImage(");
-  s = s.replace(/function PanPad\(/g, "function LightboxZoomPanPad(");
-  s = s.replace(/React\.createElement\(PanPad,/g, "React.createElement(LightboxZoomPanPad,");
-  s = s.replace(/React\.createElement\(ImageLightboxDialog,/g, "React.createElement(LightboxZoomDialog,");
-  s = s.replace(/ImageLightbox: UI\.Icon/g, "LightboxZoom: UI.Icon");
-  s = s.replace(
-    /window\.ISAFront = window\.ISAFront \|\| \{\};\s*window\.ISAFront\.Lightbox = \{[\s\S]*?\};\s*\}\)\(\);/,
-    `globalThis.ISAComponents = globalThis.ISAComponents || {};
-  globalThis.ISAComponents.LightboxZoom = {
-    LightboxZoomDialog,
-    LightboxZoomImage,
-    LightboxZoomInline,
-    LightboxZoomInlineHost,
-    useLightboxZoom,
-    svgElementToDataUrl,
-    openLightboxInline,
-    ZOOM_MIN,
-    ZOOM_MAX,
-    PAN_STEP,
-    ImageLightboxDialog: LightboxZoomDialog,
-    LightboxImage: LightboxZoomImage,
-    useImageLightboxZoom: useLightboxZoom,
-  };
-})();`,
-  );
-  return s;
+if (existsSync(OLD_SOURCE) && !existsSync(LEGACY)) {
+  renameSync(OLD_SOURCE, LEGACY);
 }
 
 function minifyCss(css) {
@@ -64,9 +32,26 @@ function minifyCss(css) {
 }
 
 function build() {
-  const raw = readFileSync(SOURCE, "utf8");
-  const transformed = transformSource(raw);
-  writeFileSync(CDN_JS, transformed, "utf8");
+  const banner =
+    "/**\n * @jeff-aporta/lightbox-zoom — CDN\n * Registra window.ISAComponents.LightboxZoom\n */\n";
+
+  esbuild.buildSync({
+    entryPoints: [ENTRY],
+    outfile: CDN_JS,
+    bundle: true,
+    format: "iife",
+    platform: "browser",
+    target: "es2020",
+    jsx: "transform",
+    jsxFactory: "React.createElement",
+    jsxFragment: "React.Fragment",
+    legalComments: "none",
+    loader: { ".jsx": "jsx", ".js": "jsx" },
+  });
+
+  let js = readFileSync(CDN_JS, "utf8");
+  if (!js.startsWith("/**")) js = banner + js;
+  writeFileSync(CDN_JS, js, "utf8");
 
   esbuild.buildSync({
     entryPoints: [CDN_JS],
@@ -78,11 +63,7 @@ function build() {
     loader: { ".js": "jsx" },
   });
 
-  let css = readFileSync(CSS_IN, "utf8");
-  css = css.replace(/conv-image-lightbox/g, "isa-lb-zoom");
-  css = css.replace(/Visor de imágenes compartido \(ISAFront\.Lightbox\)/, "Lightbox zoom — @jeff-aporta");
-  writeFileSync(CSS_IN, css, "utf8");
-  writeFileSync(CDN_CSS, minifyCss(css), "utf8");
+  writeFileSync(CDN_CSS, minifyCss(readFileSync(CSS_IN, "utf8")), "utf8");
 
   console.log("lightbox-zoom build OK");
   console.log("  ", CDN_MIN);

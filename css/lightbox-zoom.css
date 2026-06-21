@@ -102,8 +102,24 @@
 }
 
 .isa-lb-zoom__stage {
-  min-width: min(400px, 96vw);
-  min-height: 400px;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  touch-action: none;
+}
+
+.isa-lb-zoom-dialog .MuiDialog-paper {
+  display: flex;
+  flex-direction: column;
+}
+
+.isa-lb-zoom__dots {
+  flex-shrink: 0;
+}
+
+.tk-diagram-viewer.isa-lb-zoom {
+  flex: 1;
+  min-height: 0;
 }
 
 .isa-lb-zoom__viewport {

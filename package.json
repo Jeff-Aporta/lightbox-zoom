@@ -3,5 +3,8 @@
   "description": "Visor lightbox con zoom, pan y galería",
   "scripts": {
     "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
   }
 }

@@ -2,920 +2,371 @@
  * @jeff-aporta/lightbox-zoom — CDN
  * Registra window.ISAComponents.LightboxZoom
  */
-(function () {
-  "use strict";
-
-  const React = window.React;
-  const MUI = window.MaterialUI;
-
+(() => {
+  // src/lib/platform.js
   function getReact() {
     return window.ISAFront.getReact();
   }
-
   function getMaterialUI() {
     return window.ISAFront.getMaterialUI();
   }
-
   function resolveUi(ns) {
     const keys = ns ? [ns] : ["ISA", "ISAJ", "MO", "SCRUM", "FLS", "CFAI", "IAT"];
     for (let i = 0; i < keys.length; i++) {
       const bag = window[keys[i]];
-      if (bag && bag.UI && bag.UI.Icon) return bag.UI;
+      if (bag?.UI?.Icon) return bag.UI;
     }
-    throw new Error("LightboxZoom: UI.Icon no disponible — ejecutar ISAFront.registerApp antes");
+    throw new Error("LightboxZoom: UI.Icon no disponible \u2014 ejecutar ISAFront.registerApp antes");
   }
 
-  const DEFAULT_THUMB_SIZE = 100;
-  const ZOOM_MIN = 1;
-  const ZOOM_MAX = 5;
-  const ZOOM_STEP = 0.25;
-  const UI_HIDE_MS = 5000;
-  const NAV_HIDE_MS = 2000;
-  const NAV_FADE = "0.75s ease-out";
-  const PAN_EDGE_BLEED = 30;
-  const PAN_STEP = 40;
-  const VIEWPORT_MIN_W = 400;
-  const VIEWPORT_MIN_H = 400;
-  const PAN_DRAG_SENSITIVITY = 1;
-  const PINCH_WHEEL_SCALE = 0.004;
-  const PINCH_WHEEL_SCALE_LINE = 0.06;
-
-  function normalizeWheelDelta(e) {
-    let dy = e.deltaY;
-    if (e.deltaMode === 1) dy *= 16;
-    else if (e.deltaMode === 2) dy *= window.innerHeight || 800;
-    return dy;
-  }
-
-  function normalizeWheelDeltaX(e) {
-    let dx = e.deltaX;
-    if (e.deltaMode === 1) dx *= 16;
-    else if (e.deltaMode === 2) dx *= window.innerWidth || 1200;
-    return dx;
-  }
-
-  /** Zoom solo con Ctrl/Meta + rueda (pinch trackpad). */
-  function isPinchWheel(e) {
-    return e.ctrlKey || e.metaKey;
-  }
-
-  function wheelZoomDelta(e) {
-    const dy = normalizeWheelDelta(e);
-    const scale = e.deltaMode === 1 ? PINCH_WHEEL_SCALE_LINE : PINCH_WHEEL_SCALE;
-    return -dy * scale;
-  }
-
-  const WHEEL_PAN_SENSITIVITY = 0.85;
-
-function pointerDistance(a, b) {
-  return Math.hypot(b.x - a.x, b.y - a.y);
-}
-
-function pointerCenter(a, b) {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
-
-function buildThumbSx(thumbSize) {
-  const size = thumbSize || DEFAULT_THUMB_SIZE;
-  return {
-    width: thumbSize,
-    height: thumbSize,
-    minWidth: thumbSize,
-    minHeight: thumbSize,
-    maxWidth: thumbSize,
-    maxHeight: thumbSize,
-    objectFit: "cover",
-    display: "block",
-    borderRadius: 1.5,
-    border: 1,
-    borderColor: "divider",
-    boxSizing: "border-box",
-    flexShrink: 0,
-    transition: "transform 0.22s ease, border-color 0.22s ease, filter 0.22s ease",
-  };
-}
-
-function buildGridThumbSx() {
-  return {
-    width: "100%",
-    height: "100%",
-    minWidth: 0,
-    minHeight: 0,
-    maxWidth: "none",
-    maxHeight: "none",
-    objectFit: "cover",
-    display: "block",
-    borderRadius: 1,
-    border: 0,
-    boxSizing: "border-box",
-    transition: "transform 0.22s ease, filter 0.22s ease",
-  };
-}
-
-function buildThumbTriggerSx(thumbSize) {
-  const size = thumbSize || DEFAULT_THUMB_SIZE;
-  return {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    width: thumbSize,
-    height: thumbSize,
-    minWidth: thumbSize,
-    minHeight: thumbSize,
-    maxWidth: thumbSize,
-    maxHeight: thumbSize,
-    borderRadius: 1.5,
-    overflow: "hidden",
-    cursor: "zoom-in",
-    outline: "none",
-    verticalAlign: "top",
-    boxSizing: "border-box",
-    p: 0,
-    m: 0,
-    boxShadow: (t) => (t.palette.mode === "dark" ? "0 2px 10px rgba(0,0,0,0.28)" : "0 4px 14px rgba(15,23,42,0.1)"),
-    transition: "box-shadow 0.22s ease, transform 0.22s ease",
-    "&:hover": {
-      boxShadow: (t) => (t.palette.mode === "dark" ? "0 10px 28px rgba(0,0,0,0.45)" : "0 12px 32px rgba(15,23,42,0.18)"),
-      transform: "translateY(-2px)",
-      "& img": {
-        transform: "scale(1.08)",
-        borderColor: "primary.main",
-        filter: "brightness(1.04)",
-      },
-    },
-    "&:active": { transform: "translateY(0)" },
-    "&:focus-visible": {
-      outline: "2px solid",
-      outlineColor: "primary.main",
-      outlineOffset: 2,
-    },
-  };
-}
-
-function buildGridTriggerSx() {
-  return {
-    position: "relative",
-    display: "block",
-    width: "100%",
-    height: "100%",
-    minWidth: 0,
-    minHeight: 0,
-    borderRadius: 1,
-    overflow: "hidden",
-    cursor: "zoom-in",
-    outline: "none",
-    p: 0,
-    m: 0,
-    boxSizing: "border-box",
-    boxShadow: (t) => (t.palette.mode === "dark" ? "0 2px 10px rgba(0,0,0,0.28)" : "0 4px 14px rgba(15,23,42,0.1)"),
-    transition: "box-shadow 0.22s ease, transform 0.22s ease",
-    "&:hover": {
-      boxShadow: (t) => (t.palette.mode === "dark" ? "0 10px 28px rgba(0,0,0,0.45)" : "0 12px 32px rgba(15,23,42,0.18)"),
-      transform: "translateY(-2px)",
-      "& img": {
-        transform: "scale(1.06)",
-        filter: "brightness(1.04)",
-      },
-    },
-    "&:active": { transform: "translateY(0)" },
-    "&:focus-visible": {
-      outline: "2px solid",
-      outlineColor: "primary.main",
-      outlineOffset: 2,
-    },
-  };
-}
-function getPanLimits(viewport, img, zoom) {
-  if (!viewport || !img || zoom <= 1) return { maxX: 0, maxY: 0 };
-  const vw = viewport.clientWidth;
-  const vh = viewport.clientHeight;
-  const baseW = img.clientWidth;
-  const baseH = img.clientHeight;
-  if (!baseW || !baseH) return { maxX: PAN_EDGE_BLEED, maxY: PAN_EDGE_BLEED };
-  const scaledW = baseW * zoom;
-  const scaledH = baseH * zoom;
-  return {
-    maxX: Math.max(0, (scaledW - vw) / 2) + PAN_EDGE_BLEED,
-    maxY: Math.max(0, (scaledH - vh) / 2) + PAN_EDGE_BLEED,
-  };
-}
-
-function clampPan(pan, limits) {
-  return {
-    x: Math.min(limits.maxX, Math.max(-limits.maxX, pan.x)),
-    y: Math.min(limits.maxY, Math.max(-limits.maxY, pan.y)),
-  };
-}
-
-/** Mantiene fijo el punto bajo el cursor al cambiar zoom (origen: centro del viewport). */
-function panForZoomAtPoint(pan, mx, my, z1, z2) {
-  if (z2 <= 1) return { x: 0, y: 0 };
-  const ratio = z2 / z1;
-  return {
-    x: mx * (1 - ratio) + pan.x * ratio,
-    y: my * (1 - ratio) + pan.y * ratio,
-  };
-}
-
-function viewportAnchor(viewport) {
-  const rect = viewport?.getBoundingClientRect();
-  if (!rect) return { x: 0, y: 0 };
-  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-}
-
-function galleryNavBtnSx(side) {
-  return {
-    position: "absolute",
-    top: "50%",
-    [side]: { xs: 4, sm: 12 },
-    transform: "translateY(-50%)",
-    width: 44,
-    height: 44,
-    p: 0,
-    flexShrink: 0,
-    color: "#fff",
-    bgcolor: "rgba(0,0,0,0.55)",
-    zIndex: 2,
-    "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
-  };
-}
-
-function navBtnSx(side, visible) {
-  return {
-    position: "absolute",
-    top: "50%",
-    [side]: { xs: 4, sm: 12 },
-    transform: "translateY(-50%)",
-    color: "#fff",
-    opacity: visible ? 1 : 0,
-    bgcolor: visible ? "rgba(0,0,0,0.55)" : "transparent",
-    transition: `opacity ${NAV_FADE}, background-color ${NAV_FADE}`,
-    zIndex: 2,
-    "&:hover": { opacity: 1, bgcolor: "rgba(0,0,0,0.75)" },
-  };
-}
-
-function overlayBtnSx(visible) {
-  return {
-    bgcolor: visible ? "rgba(255,255,255,0.12)" : "transparent",
-    color: "#fff",
-    opacity: visible ? 1 : 0.72,
-    transition: "opacity 0.28s ease, background-color 0.28s ease",
-    "&:hover": { opacity: 1, bgcolor: "rgba(255,255,255,0.22)" },
-  };
-}
-
-const toolbarBtnSx = {
-  width: 32,
-  height: 32,
-  p: 0,
-  color: "rgba(255,255,255,0.9)",
-  bgcolor: "rgba(255,255,255,0.1)",
-  border: "none",
-  borderRadius: 1,
-  boxShadow: "none",
-  transition: "background-color 0.2s ease, opacity 0.2s ease",
-  "&:hover": { bgcolor: "rgba(255,255,255,0.16)", boxShadow: "none" },
-  "&.Mui-focusVisible": { outline: "2px solid rgba(255,255,255,0.35)", outlineOffset: 1 },
-  "&.Mui-disabled": { color: "rgba(255,255,255,0.3)", bgcolor: "rgba(255,255,255,0.05)" },
-};
-
-const toolbarShellSx = {
-  alignSelf: "flex-end",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 1,
-  px: 1,
-  py: 0.75,
-  borderRadius: 1.5,
-  bgcolor: "rgba(255,255,255,0.06)",
-  backdropFilter: "blur(10px)",
-  border: "none",
-  boxShadow: "none",
-  flexShrink: 0,
-  zIndex: 3,
-};
-
-const toolbarDividerSx = {
-  width: "1px",
-  alignSelf: "stretch",
-  minHeight: 24,
-  my: 0.25,
-  bgcolor: "rgba(255,255,255,0.1)",
-  flexShrink: 0,
-};
-
-const zoomBadgeSx = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 44,
-  height: 32,
-  px: 1,
-  borderRadius: 1,
-  bgcolor: "rgba(255,255,255,0.08)",
-  border: "none",
-  color: "rgba(255,255,255,0.9)",
-  fontSize: 12,
-  fontWeight: 600,
-  lineHeight: 1,
-  letterSpacing: 0.2,
-  textAlign: "center",
-  userSelect: "none",
-  fontVariantNumeric: "tabular-nums",
-};
-
-function useHoldRepeat(action, disabled) {
-  const { useRef, useCallback, useEffect } = getReact();
-  const actionRef = useRef(action);
-  actionRef.current = action;
-  const holdDelayRef = useRef(null);
-  const holdLoopRef = useRef(null);
-  const pointerActiveRef = useRef(false);
-
-  const stop = useCallback(() => {
-    if (holdDelayRef.current) clearTimeout(holdDelayRef.current);
-    if (holdLoopRef.current) clearInterval(holdLoopRef.current);
-    holdDelayRef.current = null;
-    holdLoopRef.current = null;
-  }, []);
-
-  useEffect(() => () => stop(), [stop]);
-
-  const onPointerDown = useCallback(
-    (e) => {
-      if (disabled) return;
-      e.preventDefault();
-      pointerActiveRef.current = true;
-      actionRef.current();
-      stop();
-      holdDelayRef.current = setTimeout(() => {
-        holdLoopRef.current = setInterval(() => actionRef.current(), 100);
-      }, 320);
-      try {
-        e.currentTarget.setPointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-    },
-    [disabled, stop],
-  );
-
-  const onPointerUp = useCallback(
-    (e) => {
-      stop();
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-    },
-    [stop],
-  );
-
-  const onClick = useCallback(
-    (e) => {
-      if (pointerActiveRef.current) {
-        pointerActiveRef.current = false;
-        e.preventDefault();
-        return;
-      }
-      if (disabled) return;
-      actionRef.current();
-    },
-    [disabled],
-  );
-
-  return {
-    onPointerDown,
-    onPointerUp,
-    onPointerLeave: stop,
-    onPointerCancel: onPointerUp,
-    onClick,
-  };
-}
-
-function PanPadButton({ label, icon, onAction, disabled, sx, Icon, panBtnSx }) {
-  const { IconButton } = getMaterialUI();
-  const repeat = useHoldRepeat(onAction, disabled);
-
-  return React.createElement(
-    IconButton,
-    {
-      type: "button",
-      title: label,
-      "aria-label": label.replace(/ \(.*\)/, ""),
-      disabled,
-      size: "small",
-      sx: { ...panBtnSx, ...sx },
-      ...repeat,
-    },
-    React.createElement(Icon, { icon, size: 15 }),
-  );
-}
-
-function LightboxZoomPanPad({ canPan, panBy, Icon }) {
-  const { Box } = getMaterialUI();
-
-  const panBtnSx = {
-    ...toolbarBtnSx,
-    width: 26,
-    height: 26,
-    p: 0,
-    borderRadius: 0.75,
-  };
-
-  const btn = (label, icon, onAction, sx) =>
-    React.createElement(PanPadButton, {
-      key: label,
-      label,
-      icon,
-      onAction,
-      disabled: !canPan,
-      sx,
-      Icon,
-      panBtnSx,
-    });
-
-  return React.createElement(
-    Box,
-    {
-      className: "isa-lb-zoom__pan-pad",
-      sx: {
-        position: "relative",
-        width: 68,
-        height: 52,
-        flexShrink: 0,
-        opacity: canPan ? 1 : 0.5,
-        transition: "opacity 0.2s ease",
-      },
-    },
-    btn("Arriba (Ctrl ↑)", "mdi:chevron-up", () => panBy(0, PAN_STEP), {
-      top: 0,
-      left: "50%",
-      transform: "translateX(-50%)",
-      position: "absolute",
-    }),
-    btn("Izquierda (Ctrl ←)", "mdi:chevron-left", () => panBy(PAN_STEP, 0), {
-      left: 0,
-      top: "50%",
-      transform: "translateY(-50%)",
-      position: "absolute",
-    }),
-    btn("Derecha (Ctrl →)", "mdi:chevron-right", () => panBy(-PAN_STEP, 0), {
-      right: 0,
-      top: "50%",
-      transform: "translateY(-50%)",
-      position: "absolute",
-    }),
-    btn("Abajo (Ctrl ↓)", "mdi:chevron-down", () => panBy(0, -PAN_STEP), {
-      bottom: 0,
-      left: "50%",
-      transform: "translateX(-50%)",
-      position: "absolute",
-    }),
-  );
-}
-
-function useOverlayUi(open, hideMs = UI_HIDE_MS) {
-  const { useState, useCallback, useEffect, useRef } = getReact();
-  const [visible, setVisible] = useState(false);
-  const timerRef = useRef(null);
-
-  const poke = useCallback(() => {
-    setVisible(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setVisible(false), hideMs);
-  }, [hideMs]);
-
-  useEffect(() => {
-    if (!open) {
-      setVisible(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      return undefined;
-    }
-    poke();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [open, poke]);
-
-  return { uiVisible: visible, pokeUi: poke };
-}
-
-function applyImgTransform(img, pan, zoom) {
-  if (!img) return;
-  img.style.transform = `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`;
-}
-
-function useLightboxZoom(open, slideKey) {
-  const { useState, useCallback, useEffect, useRef } = getReact();
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const dragging = useRef(false);
-  const dragRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
-  const zoomRef = useRef(1);
-  const panRef = useRef({ x: 0, y: 0 });
-  const viewportRef = useRef(null);
-  const imgRef = useRef(null);
-  const rafRef = useRef(0);
-  const pointerRef = useRef(null);
-
-  const syncPan = useCallback((next, { commit = true } = {}) => {
-    const limits = getPanLimits(viewportRef.current, imgRef.current, zoomRef.current);
-    const clamped = clampPan(next, limits);
-    panRef.current = clamped;
-    applyImgTransform(imgRef.current, clamped, zoomRef.current);
-    if (commit) setPan(clamped);
-    return clamped;
-  }, []);
-
-  const applyPan = useCallback((next) => {
-    syncPan(next);
-  }, [syncPan]);
-
-  const resetView = useCallback(() => {
-    zoomRef.current = 1;
-    setZoom(1);
-    syncPan({ x: 0, y: 0 });
-  }, [syncPan]);
-
-  useEffect(() => {
-    zoomRef.current = zoom;
-    applyImgTransform(imgRef.current, panRef.current, zoom);
-  }, [zoom]);
-
-  useEffect(() => {
-    panRef.current = pan;
-    applyImgTransform(imgRef.current, pan, zoomRef.current);
-  }, [pan]);
-
-  useEffect(() => {
-    if (!open) resetView();
-  }, [open, slideKey, resetView]);
-
-  useEffect(() => {
-    if (!open || zoom <= 1) return;
-    syncPan(panRef.current);
-  }, [zoom, open, slideKey, syncPan]);
-
-  const applyZoomDelta = useCallback(
-    (delta, clientX, clientY) => {
-      const viewport = viewportRef.current;
-      const z1 = zoomRef.current;
-      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +(z1 + delta).toFixed(2)));
-      if (next === z1) return;
-
-      let mx = 0;
-      let my = 0;
-      if (viewport) {
-        const rect = viewport.getBoundingClientRect();
-        mx = clientX - rect.left - rect.width / 2;
-        my = clientY - rect.top - rect.height / 2;
-      }
-
-      const p2 = panForZoomAtPoint(panRef.current, mx, my, z1, next);
-      zoomRef.current = next;
-      setZoom(next);
-      syncPan(p2);
-    },
-    [syncPan],
-  );
-
-  const applyZoomLevel = useCallback(
-    (nextZoom, clientX, clientY) => {
-      const z1 = zoomRef.current;
-      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +nextZoom.toFixed(2)));
-      if (next === z1) return;
-      const viewport = viewportRef.current;
-      let mx = 0;
-      let my = 0;
-      if (viewport) {
-        const rect = viewport.getBoundingClientRect();
-        mx = clientX - rect.left - rect.width / 2;
-        my = clientY - rect.top - rect.height / 2;
-      }
-      const p2 = panForZoomAtPoint(panRef.current, mx, my, z1, next);
-      zoomRef.current = next;
-      setZoom(next);
-      syncPan(p2);
-    },
-    [syncPan],
-  );
-
-  const zoomIn = useCallback(() => {
-    const anchor = viewportAnchor(viewportRef.current);
-    applyZoomDelta(ZOOM_STEP, anchor.x, anchor.y);
-  }, [applyZoomDelta]);
-
-  const zoomOut = useCallback(() => {
-    const anchor = viewportAnchor(viewportRef.current);
-    applyZoomDelta(-ZOOM_STEP, anchor.x, anchor.y);
-  }, [applyZoomDelta]);
-
-  const applyZoomDeltaRef = useRef(applyZoomDelta);
-  applyZoomDeltaRef.current = applyZoomDelta;
-  const applyZoomLevelRef = useRef(applyZoomLevel);
-  applyZoomLevelRef.current = applyZoomLevel;
-  const pointersRef = useRef(new Map());
-  const pinchRef = useRef(null);
-  const gestureZoomRef = useRef(1);
-
-  const isEventInViewport = useCallback((target) => {
-    const vp = viewportRef.current;
-    return Boolean(vp && target && vp.contains(target));
-  }, []);
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const blockBrowserPinchZoom = (e) => {
-      if (isPinchWheel(e)) e.preventDefault();
-    };
-    window.addEventListener("wheel", blockBrowserPinchZoom, { passive: false, capture: true });
-
-    const onWheelZoom = (e) => {
-      const inViewport = isEventInViewport(e.target);
-
-      if (isPinchWheel(e)) {
-        if (!inViewport) return;
-        e.preventDefault();
+  // src/lib/useStageTransform.js
+  var { useState, useRef, useCallback, useEffect } = getReact();
+  var STAGE_ZOOM_MIN = 0.25;
+  var STAGE_ZOOM_MAX = 8;
+  var STAGE_SPOT_ZOOM = 3;
+  var SWIPE_PX = 60;
+  var DBL_TAP_MS = 320;
+  var DBL_TAP_PX = 28;
+  var TAP_MOVE_PX = 12;
+  var CLOSE_VH = 0.3;
+  var clampScale = (v) => Math.max(STAGE_ZOOM_MIN, Math.min(STAGE_ZOOM_MAX, v));
+  var closeThreshold = () => (typeof window !== "undefined" ? window.innerHeight : 800) * CLOSE_VH;
+  function useStageTransform({ onSwipe, onSwipeDown } = {}) {
+    const [t, setT] = useState({ s: 1, x: 0, y: 0, r: 0 });
+    const [pull, setPull] = useState({ active: false, progress: 0, dy: 0 });
+    const stageRef = useRef(null);
+    const ptrs = useRef(/* @__PURE__ */ new Map());
+    const single = useRef(null);
+    const gest = useRef(null);
+    const mode = useRef("pan");
+    const swipe = useRef({ x: 0, y: 0 });
+    const scaleRef = useRef(1);
+    const lastTap = useRef({ t: 0, x: 0, y: 0 });
+    const onSwipeRef = useRef(onSwipe);
+    const onSwipeDownRef = useRef(onSwipeDown);
+    useEffect(() => {
+      scaleRef.current = t.s;
+    }, [t.s]);
+    useEffect(() => {
+      onSwipeRef.current = onSwipe;
+      onSwipeDownRef.current = onSwipeDown;
+    }, [onSwipe, onSwipeDown]);
+    const rel = useCallback((e) => {
+      const el = stageRef.current || e.currentTarget;
+      const r = el.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height };
+    }, []);
+    const zoomToPoint = useCallback((targetScale, px, py, stageW, stageH) => {
+      setT((p) => {
+        const w = stageW ?? stageRef.current?.clientWidth ?? 0;
+        const h = stageH ?? stageRef.current?.clientHeight ?? 0;
+        const cx = w / 2;
+        const cy = h / 2;
+        const mx = px - cx;
+        const my = py - cy;
+        const s1 = p.s;
+        const s2 = clampScale(targetScale);
+        const ratio = s2 / s1;
+        return { s: s2, x: p.x + mx * (1 - ratio), y: p.y + my * (1 - ratio), r: p.r };
+      });
+    }, []);
+    const reset = useCallback(() => setT({ s: 1, x: 0, y: 0, r: 0 }), []);
+    const zoomIn = useCallback(() => setT((p) => ({ ...p, s: clampScale(p.s * 1.2) })), []);
+    const zoomOut = useCallback(() => setT((p) => ({ ...p, s: clampScale(p.s / 1.2) })), []);
+    const spotZoomAt = useCallback(
+      (e) => {
+        if (e.cancelable) e.preventDefault();
         e.stopPropagation();
-        const delta = wheelZoomDelta(e);
-        if (delta) applyZoomDeltaRef.current(delta, e.clientX, e.clientY);
-        return;
-      }
-
-      if (!inViewport) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (zoomRef.current <= 1) return;
-
-      const dy = normalizeWheelDelta(e);
-      const dx = normalizeWheelDeltaX(e);
-      if (e.shiftKey) {
-        const horizontal = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
-        syncPan({
-          x: panRef.current.x - horizontal * WHEEL_PAN_SENSITIVITY,
-          y: panRef.current.y,
-        });
-        return;
-      }
-
-      syncPan({
-        x: panRef.current.x - dx * WHEEL_PAN_SENSITIVITY,
-        y: panRef.current.y - dy * WHEEL_PAN_SENSITIVITY,
-      });
-    };
-    document.addEventListener("wheel", onWheelZoom, { passive: false, capture: true });
-
-    let gestureEl = viewportRef.current;
-    const gestureCleanups = [];
-
-    const onGestureStart = (e) => {
-      e.preventDefault();
-      gestureZoomRef.current = zoomRef.current;
-    };
-    const onGestureChange = (e) => {
-      e.preventDefault();
-      const next = gestureZoomRef.current * (e.scale || 1);
-      applyZoomLevelRef.current(next, e.clientX, e.clientY);
-    };
-    const onGestureEnd = (e) => {
-      e.preventDefault();
-      gestureZoomRef.current = zoomRef.current;
-    };
-
-    const attachGestures = (node) => {
-      if (!node) return;
-      node.addEventListener("gesturestart", onGestureStart, { passive: false });
-      node.addEventListener("gesturechange", onGestureChange, { passive: false });
-      node.addEventListener("gestureend", onGestureEnd, { passive: false });
-      gestureCleanups.push(() => {
-        node.removeEventListener("gesturestart", onGestureStart);
-        node.removeEventListener("gesturechange", onGestureChange);
-        node.removeEventListener("gestureend", onGestureEnd);
-      });
-    };
-
-    if (gestureEl) attachGestures(gestureEl);
-    else {
-      const raf = requestAnimationFrame(() => {
-        gestureEl = viewportRef.current;
-        if (gestureEl) attachGestures(gestureEl);
-      });
-      gestureCleanups.push(() => cancelAnimationFrame(raf));
-    }
-
-    return () => {
-      window.removeEventListener("wheel", blockBrowserPinchZoom, { capture: true });
-      document.removeEventListener("wheel", onWheelZoom, { capture: true });
-      gestureCleanups.forEach((fn) => fn());
-    };
-  }, [open, slideKey, isEventInViewport, syncPan]);
-
-  const applyDragPan = useCallback(
-    (commit = false) => {
-      const { x, y, panX, panY } = dragRef.current;
-      return syncPan(
-        {
-          x: panX + x * PAN_DRAG_SENSITIVITY,
-          y: panY + y * PAN_DRAG_SENSITIVITY,
-        },
-        { commit },
-      );
-    },
-    [syncPan],
-  );
-
-  const flushDrag = useCallback(() => {
-    rafRef.current = 0;
-    applyDragPan(false);
-  }, [applyDragPan]);
-
-  const onPanStart = useCallback(
-    (e) => {
-      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (pointersRef.current.size >= 2) {
-        dragging.current = false;
-        pointerRef.current = null;
-        const pts = [...pointersRef.current.values()];
-        const a = pts[pts.length - 2];
-        const b = pts[pts.length - 1];
-        const center = pointerCenter(a, b);
-        pinchRef.current = {
-          dist0: Math.max(pointerDistance(a, b), 24),
-          zoom0: zoomRef.current,
-          cx: center.x,
-          cy: center.y,
-        };
-        e.preventDefault();
-        return;
-      }
-
-      if (zoomRef.current <= 1 || e.button !== 0) return;
-      dragging.current = true;
-      pointerRef.current = e.pointerId;
-      dragRef.current = { x: 0, y: 0, panX: panRef.current.x, panY: panRef.current.y, lastX: e.clientX, lastY: e.clientY };
-      e.currentTarget.setPointerCapture(e.pointerId);
-      if (imgRef.current) imgRef.current.style.willChange = "transform";
-      e.preventDefault();
-    },
-    [],
-  );
-
-  const onPanMove = useCallback(
-    (e) => {
-      if (pointersRef.current.has(e.pointerId)) {
-        pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      }
-
-      if (pointersRef.current.size >= 2 && pinchRef.current) {
-        const pts = [...pointersRef.current.values()];
-        if (pts.length >= 2) {
-          const a = pts[pts.length - 2];
-          const b = pts[pts.length - 1];
-          const dist = Math.max(pointerDistance(a, b), 8);
-          const { dist0, zoom0, cx, cy } = pinchRef.current;
-          const next = zoom0 * (dist / dist0);
-          applyZoomLevelRef.current(next, cx, cy);
-        }
-        e.preventDefault();
-        return;
-      }
-
-      if (!dragging.current || pointerRef.current !== e.pointerId) return;
-      const dx = e.clientX - dragRef.current.lastX;
-      const dy = e.clientY - dragRef.current.lastY;
-      dragRef.current.lastX = e.clientX;
-      dragRef.current.lastY = e.clientY;
-      dragRef.current.x += dx;
-      dragRef.current.y += dy;
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(flushDrag);
-      }
-      e.preventDefault();
-    },
-    [flushDrag],
-  );
-
-  const onPanEnd = useCallback(
-    (e) => {
-      pointersRef.current.delete(e.pointerId);
-      if (pointersRef.current.size < 2) pinchRef.current = null;
-
-      if (!dragging.current) return;
-      if (e.pointerId !== pointerRef.current) return;
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = 0;
-      }
-      applyDragPan(true);
-      dragging.current = false;
-      pointerRef.current = null;
-      if (imgRef.current) imgRef.current.style.willChange = "";
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {
-        /* ya liberado */
-      }
-    },
-    [applyDragPan],
-  );
-
-  const onImgLoad = useCallback(() => {
-    if (zoomRef.current > 1) {
-      syncPan(panRef.current);
-    }
-  }, [syncPan]);
-
-  const panBy = useCallback((dx, dy) => {
-    if (zoomRef.current <= 1) return;
-    syncPan({ x: panRef.current.x + dx, y: panRef.current.y + dy });
-  }, [syncPan]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      dragging.current = false;
-      pointerRef.current = null;
-      rafRef.current = 0;
-      pointersRef.current.clear();
-      pinchRef.current = null;
-    };
-  }, [open]);
-
-  return {
-    zoom,
-    pan,
-    resetView,
-    zoomIn,
-    zoomOut,
-    onPanStart,
-    onPanMove,
-    onPanEnd,
-    onImgLoad,
-    panBy,
-    viewportRef,
-    imgRef,
-    canPan: zoom > 1,
-    isDragging: dragging,
-  };
-}
-
-function GalleryDots({ count, index, onSelect }) {
-  const { Box } = getMaterialUI();
-  if (count <= 1) return null;
-
-  return React.createElement(
-    Box,
-    {
-      className: "isa-lb-zoom__gallery-dots",
-      role: "tablist",
-      "aria-label": "Posición en galería",
-      sx: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.75,
-        height: 32,
-        flexShrink: 0,
+        const { x, y, w, h } = rel(e);
+        zoomToPoint(STAGE_SPOT_ZOOM, x, y, w, h);
       },
-    },
-    Array.from({ length: count }, (_, i) =>
-      React.createElement(Box, {
+      [rel, zoomToPoint]
+    );
+    const tryDoubleTap = useCallback(
+      (x, y, w, h) => {
+        const now = Date.now();
+        const last = lastTap.current;
+        if (now - last.t < DBL_TAP_MS && Math.hypot(x - last.x, y - last.y) < DBL_TAP_PX) {
+          lastTap.current = { t: 0, x: 0, y: 0 };
+          zoomToPoint(STAGE_SPOT_ZOOM, x, y, w, h);
+          return true;
+        }
+        lastTap.current = { t: now, x, y };
+        return false;
+      },
+      [zoomToPoint]
+    );
+    const onWheel = useCallback((e) => {
+      if (e.cancelable) e.preventDefault();
+      const k = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      setT((p) => ({ ...p, s: clampScale(p.s * k) }));
+    }, []);
+    const onPointerDown = useCallback((e) => {
+      const { x, y } = rel(e);
+      ptrs.current.set(e.pointerId, { x, y });
+      if (ptrs.current.size === 1) {
+        single.current = { x, y };
+        gest.current = null;
+        mode.current = e.pointerType === "touch" && scaleRef.current === 1 ? "swipe" : "pan";
+        swipe.current = { x: 0, y: 0 };
+      } else {
+        single.current = null;
+        gest.current = null;
+        mode.current = "pan";
+        setPull((p) => p.active ? { active: false, progress: 0, dy: 0 } : p);
+      }
+    }, [rel]);
+    const onPointerMove = useCallback(
+      (e) => {
+        if (!ptrs.current.has(e.pointerId)) return;
+        const { x, y } = rel(e);
+        ptrs.current.set(e.pointerId, { x, y });
+        const pts = [...ptrs.current.values()];
+        if (pts.length === 1 && single.current) {
+          const dx = x - single.current.x;
+          const dy = y - single.current.y;
+          single.current = { x, y };
+          if (mode.current === "swipe") {
+            const sx = swipe.current.x + dx;
+            const sy = swipe.current.y + dy;
+            swipe.current = { x: sx, y: sy };
+            if (sy > 0 && sy > Math.abs(sx)) {
+              setPull({ active: true, dy: sy, progress: Math.min(1, sy / closeThreshold()) });
+            } else {
+              setPull((p) => p.active ? { active: false, progress: 0, dy: 0 } : p);
+            }
+          } else {
+            setT((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
+          }
+        } else if (pts.length >= 2) {
+          const [a, b] = pts;
+          const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+          const ang = Math.atan2(b.y - a.y, b.x - a.x);
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2;
+          if (gest.current) {
+            const k = dist / (gest.current.dist || dist);
+            const dr = (ang - gest.current.ang) * 180 / Math.PI;
+            const dmx = mx - gest.current.mx;
+            const dmy = my - gest.current.my;
+            setT((p) => ({ ...p, s: clampScale(p.s * k), r: p.r + dr, x: p.x + dmx, y: p.y + dmy }));
+          }
+          gest.current = { dist, ang, mx, my };
+        }
+      },
+      [rel]
+    );
+    const endPtr = useCallback(
+      (e) => {
+        const pt = rel(e);
+        const wasSwipe = mode.current === "swipe";
+        const { x: sx, y: sy } = swipe.current;
+        ptrs.current.delete(e.pointerId);
+        if (wasSwipe && ptrs.current.size === 0 && Math.abs(sx) < TAP_MOVE_PX && Math.abs(sy) < TAP_MOVE_PX) {
+          if (tryDoubleTap(pt.x, pt.y, pt.w, pt.h)) {
+            setPull({ active: false, progress: 0, dy: 0 });
+            single.current = null;
+            gest.current = null;
+            mode.current = "pan";
+            return;
+          }
+        }
+        if (ptrs.current.size === 0) {
+          if (wasSwipe) {
+            if (Math.abs(sx) > Math.abs(sy)) {
+              if (Math.abs(sx) >= SWIPE_PX) onSwipeRef.current?.(sx < 0 ? "next" : "prev");
+            } else if (sy >= closeThreshold()) {
+              onSwipeDownRef.current?.();
+            }
+          }
+          setPull((p) => p.active ? { active: false, progress: 0, dy: 0 } : p);
+          single.current = null;
+          gest.current = null;
+          mode.current = "pan";
+        } else if (ptrs.current.size === 1) {
+          const v = [...ptrs.current.values()][0];
+          single.current = v ? { ...v } : null;
+          gest.current = null;
+          mode.current = "pan";
+        }
+      },
+      [rel, tryDoubleTap]
+    );
+    const transform = `translate(${t.x}px, ${t.y}px) scale(${t.s}) rotate(${t.r}deg)`;
+    const bind = {
+      onWheel,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp: endPtr,
+      onPointerCancel: endPtr,
+      onDoubleClick: spotZoomAt
+    };
+    const transformed = t.s !== 1 || t.x !== 0 || t.y !== 0 || t.r !== 0;
+    return {
+      stageRef,
+      transform,
+      bind,
+      reset,
+      zoomIn,
+      zoomOut,
+      zoomToPoint,
+      spotZoomAt,
+      scalePct: Math.round(t.s * 100),
+      transformed,
+      pull
+    };
+  }
+  function useLightboxZoom(opts) {
+    return useStageTransform(opts);
+  }
+
+  // src/LightboxZoomStage.jsx
+  var ICON = {
+    zoomIn: "mdi:magnify-plus-outline",
+    zoomOut: "mdi:magnify-minus-outline",
+    restore: "mdi:backup-restore",
+    slidePrev: "mdi:chevron-left",
+    slideNext: "mdi:chevron-right",
+    open: "mdi:open-in-new",
+    close: "mdi:close"
+  };
+  function LightboxZoomStage({
+    ns,
+    view,
+    toolbarLeft = null,
+    toolbarRight = null,
+    gallery = null,
+    slideIndex = 0,
+    slideCount = 0,
+    onSlidePrev,
+    onSlideNext,
+    onGoToSlide,
+    caption = "",
+    children = null,
+    className = "isa-lb-zoom"
+  }) {
+    const { Box, IconButton, Tooltip, CircularProgress } = getMaterialUI();
+    const UI = resolveUi(ns);
+    const cur = gallery ? gallery[Math.min(slideIndex, slideCount - 1)] : null;
+    const tbtn = (icon, title, onClick, size = 18) => /* @__PURE__ */ React.createElement(Tooltip, { title, key: title }, /* @__PURE__ */ React.createElement(IconButton, { onClick, size: "small", sx: { color: "inherit" }, "aria-label": title }, /* @__PURE__ */ React.createElement(UI.Icon, { icon, size })));
+    const defaultLeft = gallery && slideCount > 1 ? /* @__PURE__ */ React.createElement(React.Fragment, null, tbtn(ICON.slidePrev, "Anterior", onSlidePrev), /* @__PURE__ */ React.createElement(Box, { component: "span", sx: { minWidth: 44, textAlign: "center", fontSize: 12, fontVariantNumeric: "tabular-nums", opacity: 0.85 } }, slideIndex + 1, " / ", slideCount), tbtn(ICON.slideNext, "Siguiente", onSlideNext)) : null;
+    const defaultRight = gallery && cur?.src ? [[{ icon: ICON.open, title: "Abrir original", onClick: () => window.open(cur.src, "_blank", "noopener") }]] : [];
+    const rightGroups = toolbarRight ?? defaultRight;
+    return /* @__PURE__ */ React.createElement(Box, { className, sx: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", p: { xs: 1, sm: 2 } } }, /* @__PURE__ */ React.createElement(
+      Box,
+      {
+        className: `${className}__toolbar`,
+        sx: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, color: "rgba(255,255,255,0.92)", flexShrink: 0 }
+      },
+      /* @__PURE__ */ React.createElement(Box, { sx: { display: "inline-flex", alignItems: "center", gap: 0.25, flex: "1 1 0", minWidth: 0 } }, toolbarLeft ?? defaultLeft),
+      /* @__PURE__ */ React.createElement(Box, { sx: { display: "inline-flex", alignItems: "center", gap: 0.25, flexShrink: 0 } }, tbtn(ICON.zoomOut, "Alejar", view.zoomOut), /* @__PURE__ */ React.createElement(Box, { component: "span", className: `${className}__zoom-label`, sx: { minWidth: 42, textAlign: "center", fontSize: 12, fontVariantNumeric: "tabular-nums", opacity: 0.85 } }, view.scalePct, "%"), tbtn(ICON.zoomIn, "Acercar", view.zoomIn), tbtn(ICON.restore, "Restaurar vista", view.reset)),
+      /* @__PURE__ */ React.createElement(Box, { sx: { display: "inline-flex", alignItems: "center", gap: 1, flex: "1 1 0", minWidth: 0, justifyContent: "flex-end" } }, Array.isArray(rightGroups) && rightGroups.map((group, gi) => /* @__PURE__ */ React.createElement(Box, { key: gi, sx: { display: "inline-flex", alignItems: "center", gap: 0.25 } }, group.map((b) => tbtn(b.icon, b.title, b.onClick, b.size ?? 20)))))
+    ), /* @__PURE__ */ React.createElement(
+      Box,
+      {
+        className: `${className}__stage`,
+        ref: view.stageRef,
+        ...view.bind,
+        sx: {
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          overflow: "hidden",
+          touchAction: "none",
+          cursor: view.transformed ? "grab" : "default",
+          p: { xs: 0.5, sm: 1.5 }
+        }
+      },
+      view.pull.active && /* @__PURE__ */ React.createElement(
+        Box,
+        {
+          sx: {
+            position: "absolute",
+            top: 14,
+            left: "50%",
+            zIndex: 10,
+            pointerEvents: "none",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0.5,
+            transform: `translate(-50%, ${Math.min(view.pull.dy * 0.5, 160)}px)`
+          }
+        },
+        /* @__PURE__ */ React.createElement(Box, { sx: { position: "relative", width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement(
+          CircularProgress,
+          {
+            variant: "determinate",
+            value: Math.round(view.pull.progress * 100),
+            size: 52,
+            thickness: 4,
+            sx: { color: view.pull.progress >= 1 ? "#ef4444" : "rgba(255,255,255,0.9)" }
+          }
+        ), /* @__PURE__ */ React.createElement(
+          Box,
+          {
+            sx: {
+              position: "absolute",
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: view.pull.progress >= 1 ? "#ef4444" : "rgba(255,255,255,0.14)",
+              color: view.pull.progress >= 1 ? "#fff" : "rgba(255,255,255,0.92)",
+              transition: "background-color 0.15s ease"
+            }
+          },
+          /* @__PURE__ */ React.createElement(UI.Icon, { icon: "mdi:close", size: 22 })
+        )),
+        /* @__PURE__ */ React.createElement(Box, { sx: { fontSize: 11, fontWeight: 600, color: view.pull.progress >= 1 ? "#ef4444" : "rgba(255,255,255,0.78)" } }, view.pull.progress >= 1 ? "Soltar para cerrar" : "Desliza para cerrar")
+      ),
+      /* @__PURE__ */ React.createElement(
+        Box,
+        {
+          sx: {
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: view.pull.active ? `translateY(${view.pull.dy}px) ${view.transform}` : view.transform,
+            transformOrigin: "center center",
+            opacity: view.pull.active ? 1 - 0.3 * view.pull.progress : 1
+          }
+        },
+        gallery ? /* @__PURE__ */ React.createElement(
+          "img",
+          {
+            src: cur?.src,
+            alt: cur?.alt || "",
+            draggable: false,
+            style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block", userSelect: "none", pointerEvents: "none" }
+          }
+        ) : children
+      )
+    ), gallery && (cur?.caption || cur?.alt) ? /* @__PURE__ */ React.createElement(Box, { sx: { textAlign: "center", color: "rgba(255,255,255,0.82)", fontSize: 13, px: 2, pt: 0.5, flexShrink: 0 } }, cur.caption || cur.alt) : caption ? /* @__PURE__ */ React.createElement(Box, { sx: { textAlign: "center", color: "rgba(255,255,255,0.82)", fontSize: 13, px: 2, pt: 0.5, flexShrink: 0 } }, caption) : null, gallery && slideCount > 1 && onGoToSlide ? /* @__PURE__ */ React.createElement(Box, { className: `${className}__dots`, sx: { display: "flex", justifyContent: "center", gap: 0.75, py: 1, flexShrink: 0 } }, gallery.map((_, i) => /* @__PURE__ */ React.createElement(
+      Box,
+      {
         key: i,
-        component: "button",
-        type: "button",
-        role: "tab",
-        "aria-selected": i === index,
-        "aria-label": `Imagen ${i + 1} de ${count}`,
-        onClick: () => onSelect(i),
-        className: i === index ? "isa-lb-zoom__gallery-dot isa-lb-zoom__gallery-dot--active" : "isa-lb-zoom__gallery-dot",
-        sx: (theme) => ({
-          width: 7,
-          height: 7,
-          p: 0,
-          border: "none",
+        onClick: () => onGoToSlide(i),
+        sx: {
+          width: 9,
+          height: 9,
           borderRadius: "50%",
           cursor: "pointer",
-          flexShrink: 0,
-          bgcolor: i === index ? theme.palette.primary.main : "rgba(255,255,255,0.35)",
-          transition: "background-color 0.2s ease, transform 0.2s ease",
-          transform: i === index ? "scale(1.15)" : "scale(1)",
-          "&:hover": {
-            bgcolor: i === index ? theme.palette.primary.light : "rgba(255,255,255,0.55)",
-          },
-        }),
-      }),
-    ),
-  );
-}
+          bgcolor: i === slideIndex ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+          transition: "background-color 0.15s ease"
+        }
+      }
+    ))) : null);
+  }
 
+  // src/LightboxZoomDialog.jsx
+  var { useState: useState2, useCallback: useCallback2, useMemo, useEffect: useEffect2 } = getReact();
   function LightboxZoomDialog({
     ns,
     open,
@@ -925,380 +376,174 @@ function GalleryDots({ count, index, onSelect }) {
     startIndex = 0,
     alt = "Imagen adjunta",
     className = "isa-lb-zoom",
-    fullPage = false,
+    closable = true,
+    children = null,
+    toolbarLeft = null,
+    toolbarRight = null,
+    caption = ""
   }) {
-    const { useState, useEffect, useCallback, useMemo } = getReact();
-    const { Box, Dialog, IconButton, Typography, Stack } = getMaterialUI();
-    const UI = resolveUi(ns);
-    const { Icon } = UI;
-
+    const { Dialog } = getMaterialUI();
     const slides = useMemo(() => {
       if (Array.isArray(slidesProp) && slidesProp.length) return slidesProp;
-      if (src) return [{ src, alt }];
-      return [];
-    }, [slidesProp, src, alt]);
-
-    const [index, setIndex] = useState(startIndex);
-    useEffect(() => {
-      if (open) setIndex(startIndex);
+      if (src) return [{ src, alt, caption }];
+      return null;
+    }, [slidesProp, src, alt, caption]);
+    const gallery = slides?.length ? slides : null;
+    const [idx, setIdx] = useState2(startIndex || 0);
+    const slideCount = gallery ? gallery.length : 0;
+    const goPrev = useCallback2(() => setIdx((i) => (i - 1 + slideCount) % slideCount), [slideCount]);
+    const goNext = useCallback2(() => setIdx((i) => (i + 1) % slideCount), [slideCount]);
+    const handleSwipe = useCallback2(
+      (dir) => {
+        if (slideCount > 1) (dir === "next" ? goNext : goPrev)();
+      },
+      [slideCount, goNext, goPrev]
+    );
+    const view = useStageTransform({
+      onSwipe: handleSwipe,
+      onSwipeDown: closable ? onClose : void 0
+    });
+    useEffect2(() => {
+      if (open) setIdx(startIndex || 0);
     }, [open, startIndex]);
-
-    const current = slides[index] || slides[0];
-    const hasNav = slides.length > 1;
-    const slideKey = current?.src ?? String(index);
-
-    const {
-      zoom, pan, resetView, zoomIn, zoomOut, onPanStart, onPanMove, onPanEnd, onImgLoad, panBy,
-      viewportRef, imgRef, canPan,
-    } = useLightboxZoom(open, slideKey);
-
-    const goPrev = useCallback(() => {
-      setIndex((i) => (i - 1 + slides.length) % slides.length);
-    }, [slides.length]);
-
-    const goNext = useCallback(() => {
-      setIndex((i) => (i + 1) % slides.length);
-    }, [slides.length]);
-
-    const goToSlide = useCallback((i) => {
-      setIndex(((i % slides.length) + slides.length) % slides.length);
-    }, [slides.length]);
-
-    const prevHold = useHoldRepeat(goPrev, !hasNav);
-    const nextHold = useHoldRepeat(goNext, !hasNav);
-    const zoomInHold = useHoldRepeat(zoomIn, zoom >= ZOOM_MAX);
-    const zoomOutHold = useHoldRepeat(zoomOut, zoom <= ZOOM_MIN);
-
-    useEffect(() => {
-      if (!open) return undefined;
+    useEffect2(() => {
+      view.reset();
+    }, [idx, open, view.reset]);
+    useEffect2(() => {
+      if (!open || !gallery || slideCount < 2) return void 0;
       const onKey = (e) => {
-        if (e.key === "Escape") {
-          onClose();
-          return;
-        }
-        const mod = e.ctrlKey || e.metaKey;
-        if (mod) {
-          if (e.key === "0") { e.preventDefault(); resetView(); return; }
-          if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomIn(); return; }
-          if (e.key === "-") { e.preventDefault(); zoomOut(); return; }
-          if (e.key === "ArrowUp") { e.preventDefault(); panBy(0, PAN_STEP); return; }
-          if (e.key === "ArrowDown") { e.preventDefault(); panBy(0, -PAN_STEP); return; }
-          if (e.key === "ArrowLeft") { e.preventDefault(); panBy(PAN_STEP, 0); return; }
-          if (e.key === "ArrowRight") { e.preventDefault(); panBy(-PAN_STEP, 0); return; }
-          return;
-        }
-        if (e.key === "ArrowLeft" && hasNav) goPrev();
-        if (e.key === "ArrowRight" && hasNav) goNext();
+        if (e.key === "Escape" && closable) onClose?.();
+        else if (e.key === "ArrowLeft") goPrev();
+        else if (e.key === "ArrowRight") goNext();
       };
       window.addEventListener("keydown", onKey);
       return () => window.removeEventListener("keydown", onKey);
-    }, [open, hasNav, goPrev, goNext, zoomIn, zoomOut, resetView, panBy, onClose]);
-
-    if (!open || !current?.src) return null;
-
-    const bounds = fullPage
-      ? {
-          stageMinH: "calc(100vh - 148px)",
-          viewportMinH: "calc(100vh - 148px)",
-          viewportMaxH: "calc(100vh - 148px)",
-          imgMaxH: "calc(100vh - 148px)",
-        }
-      : {
-          stageMinH: VIEWPORT_MIN_H,
-          viewportMinH: VIEWPORT_MIN_H,
-          viewportMaxH: "min(78vh, 860px)",
-          imgMaxH: "min(78vh, 860px)",
-        };
-
-    const dialogClass = [className, fullPage ? "isa-lb-zoom--fullpage" : ""].filter(Boolean).join(" ");
-
-    return React.createElement(
+    }, [open, gallery, slideCount, goPrev, goNext, onClose, closable]);
+    if (!open) return null;
+    if (gallery && !gallery[0]?.src) return null;
+    if (!gallery && !children) return null;
+    const closeGroup = closable ? [[{ icon: "mdi:close", title: "Cerrar", onClick: onClose, size: 20 }]] : [];
+    const mergedRight = toolbarRight ? [...Array.isArray(toolbarRight[0]) ? toolbarRight : [toolbarRight], ...closeGroup] : closeGroup;
+    return /* @__PURE__ */ React.createElement(
       Dialog,
       {
         open,
-        onClose,
-        maxWidth: false,
-        fullScreen: fullPage,
-        scroll: fullPage ? "paper" : undefined,
-        className: dialogClass,
-        PaperProps: {
-          sx: fullPage
-            ? {
-                m: 0,
-                width: "100%",
-                maxWidth: "100%",
-                height: "100%",
-                maxHeight: "none",
-                borderRadius: 0,
-                bgcolor: "transparent",
-                boxShadow: "none",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-              }
-            : {
-                m: { xs: 1, sm: 2 },
-                maxWidth: "min(96vw, 1200px)",
-                minWidth: `min(${VIEWPORT_MIN_W}px, 96vw)`,
-                width: "100%",
-                bgcolor: "transparent",
-                boxShadow: "none",
-                overflow: "visible",
-              },
-        },
-        slotProps: {
-          backdrop: { sx: { bgcolor: "rgba(0,0,0,0.88)", backdropFilter: "blur(4px)" } },
-        },
+        onClose: closable ? onClose : void 0,
+        fullScreen: true,
+        className: `${className}-dialog`,
+        PaperProps: { sx: { bgcolor: "transparent", boxShadow: "none", borderRadius: 0, display: "flex", flexDirection: "column" } },
+        slotProps: { backdrop: { sx: { bgcolor: "rgba(4,10,20,0.92)", backdropFilter: "blur(4px)" } } }
       },
-      React.createElement(
-        Box,
+      /* @__PURE__ */ React.createElement(
+        LightboxZoomStage,
         {
-          sx: {
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            ...(fullPage
-              ? { flex: 1, minHeight: 0, height: "100%", px: { xs: 1, sm: 2 }, py: 1, boxSizing: "border-box" }
-              : {}),
-          },
+          ns,
+          view,
+          className,
+          gallery,
+          slideIndex: idx,
+          slideCount,
+          onSlidePrev: goPrev,
+          onSlideNext: goNext,
+          onGoToSlide: setIdx,
+          toolbarLeft,
+          toolbarRight: mergedRight.length ? mergedRight : null,
+          caption
         },
-        React.createElement(
-          Box,
-          {
-            className: "isa-lb-zoom__toolbar",
-            sx: {
-              alignSelf: "stretch",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-              width: "100%",
-            },
-          },
-          hasNav
-            ? React.createElement(GalleryDots, { count: slides.length, index, onSelect: goToSlide })
-            : React.createElement(Box, { sx: { flex: "1 1 auto", minWidth: 0 } }),
-          React.createElement(
-            Box,
-            { sx: { display: "inline-flex", alignItems: "center", gap: 0.5, flexShrink: 0 } },
-            React.createElement(
-              Stack,
-              { direction: "row", spacing: 0.5, alignItems: "center", sx: { height: 32 } },
-              React.createElement(IconButton, {
-                type: "button", title: "Alejar (Ctrl + rueda ↓)", "aria-label": "Alejar",
-                disabled: zoom <= ZOOM_MIN, sx: toolbarBtnSx, size: "small",
-                ...zoomOutHold,
-              }, React.createElement(Icon, { icon: "mdi:magnify-minus-outline", size: 18 })),
-              React.createElement(Box, { component: "span", className: "isa-lb-zoom__zoom-label" }, Math.round(zoom * 100) + "%"),
-              React.createElement(IconButton, {
-                type: "button", title: "Acercar (Ctrl + rueda ↑)", "aria-label": "Acercar",
-                disabled: zoom >= ZOOM_MAX, sx: toolbarBtnSx, size: "small",
-                ...zoomInHold,
-              }, React.createElement(Icon, { icon: "mdi:magnify-plus-outline", size: 18 })),
-              React.createElement(IconButton, {
-                type: "button", title: "Restablecer (Ctrl 0)", "aria-label": "Restablecer vista",
-                onClick: resetView, disabled: zoom <= 1 && pan.x === 0 && pan.y === 0, sx: toolbarBtnSx, size: "small",
-              }, React.createElement(Icon, { icon: "mdi:fit-to-screen-outline", size: 18 })),
-            ),
-            React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
-            React.createElement(LightboxZoomPanPad, { canPan, panBy, Icon }),
-            React.createElement(Box, { className: "isa-lb-zoom__toolbar-divider" }),
-            React.createElement(IconButton, {
-              type: "button", title: "Cerrar", "aria-label": "Cerrar imagen",
-              onClick: onClose, sx: toolbarBtnSx, size: "small",
-            }, React.createElement(Icon, { icon: "mdi:close", size: 18 })),
-          ),
-        ),
-        React.createElement(
-          Box,
-          {
-            className: "isa-lb-zoom__stage",
-            sx: {
-              position: "relative",
-              width: "100%",
-              alignSelf: "center",
-              minWidth: fullPage ? "100%" : `min(${VIEWPORT_MIN_W}px, 96vw)`,
-              minHeight: bounds.stageMinH,
-              ...(fullPage ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } : {}),
-            },
-          },
-          hasNav ? React.createElement(IconButton, {
-            "aria-label": "Anterior", title: "Anterior", type: "button",
-            className: "isa-lb-zoom__nav-btn isa-lb-zoom__nav-btn--left",
-            sx: galleryNavBtnSx("left"),
-            ...prevHold,
-          }, React.createElement(Icon, { icon: "mdi:chevron-left", size: 28 })) : null,
-          hasNav ? React.createElement(IconButton, {
-            "aria-label": "Siguiente", title: "Siguiente", type: "button",
-            className: "isa-lb-zoom__nav-btn isa-lb-zoom__nav-btn--right",
-            sx: galleryNavBtnSx("right"),
-            ...nextHold,
-          }, React.createElement(Icon, { icon: "mdi:chevron-right", size: 28 })) : null,
-          React.createElement(
-          Box,
-          {
-            ref: viewportRef,
-            className: "isa-lb-zoom__viewport",
-            title: "Rueda: desplazar vertical · Shift+rueda: horizontal · Ctrl+rueda: zoom",
-            onPointerDown: onPanStart,
-            onPointerMove: onPanMove,
-            onPointerUp: onPanEnd,
-            onPointerCancel: onPanEnd,
-            sx: {
-              overflow: "hidden",
-              width: "100%",
-              minWidth: fullPage ? "100%" : `min(${VIEWPORT_MIN_W}px, 96vw)`,
-              minHeight: bounds.viewportMinH,
-              maxWidth: "100%",
-              maxHeight: bounds.viewportMaxH,
-              display: "flex", alignItems: "center", justifyContent: "center", alignSelf: "center",
-              cursor: canPan ? "grab" : "default", userSelect: "none", touchAction: "none",
-              ...(fullPage ? { flex: 1, minHeight: 0 } : {}),
-              "&:active": { cursor: canPan ? "grabbing" : "default" },
-            },
-          },
-          React.createElement(Box, {
-            ref: imgRef, component: "img", src: current.src, alt: current.alt ?? "",
-            draggable: false, onLoad: onImgLoad,
-            sx: {
-              display: "block", maxWidth: "100%", maxHeight: bounds.imgMaxH,
-              width: "auto", height: "auto", borderRadius: 0.5,
-              boxShadow: "0 24px 80px rgba(0,0,0,0.55)", transformOrigin: "center center",
-            },
-          }),
-        ),
-        ),
-        current.caption ? React.createElement(
-          Box,
-          { sx: { mt: 1.5, px: { xs: 1, sm: 1.5 }, py: 0.5, width: "100%", textAlign: "left" } },
-          React.createElement(Typography, { variant: "body2", sx: { color: "rgba(255,255,255,0.92)", lineHeight: 1.5 } }, current.caption),
-        ) : null,
-      ),
+        children
+      )
     );
   }
 
-  function svgElementToDataUrl(svgEl, opts) {
-    if (!svgEl) return "";
-    const clone = svgEl.cloneNode(true);
-    if (!clone.getAttribute("xmlns")) {
-      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    }
-    if (opts && opts.bg) {
-      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      bg.setAttribute("width", "100%");
-      bg.setAttribute("height", "100%");
-      bg.setAttribute("fill", opts.bg);
-      clone.insertBefore(bg, clone.firstChild);
-    }
-    const serialized = new XMLSerializer().serializeToString(clone);
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+  // src/lib/thumb-sx.js
+  var DEFAULT_THUMB_SIZE = 100;
+  function buildThumbSx(thumbSize) {
+    const size = thumbSize || DEFAULT_THUMB_SIZE;
+    return {
+      width: size,
+      height: size,
+      minWidth: size,
+      minHeight: size,
+      maxWidth: size,
+      maxHeight: size,
+      objectFit: "cover",
+      display: "block",
+      borderRadius: 1.5,
+      border: 1,
+      borderColor: "divider",
+      boxSizing: "border-box",
+      flexShrink: 0,
+      transition: "transform 0.22s ease, border-color 0.22s ease, filter 0.22s ease"
+    };
+  }
+  function buildGridThumbSx() {
+    return {
+      width: "100%",
+      height: "100%",
+      minWidth: 0,
+      minHeight: 0,
+      maxWidth: "none",
+      maxHeight: "none",
+      objectFit: "cover",
+      display: "block",
+      borderRadius: 1,
+      border: 0,
+      boxSizing: "border-box",
+      transition: "transform 0.22s ease, filter 0.22s ease"
+    };
+  }
+  function buildThumbTriggerSx(thumbSize) {
+    const size = thumbSize || DEFAULT_THUMB_SIZE;
+    return {
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      width: size,
+      height: size,
+      minWidth: size,
+      minHeight: size,
+      maxWidth: size,
+      maxHeight: size,
+      borderRadius: 1.5,
+      overflow: "hidden",
+      cursor: "zoom-in",
+      outline: "none",
+      verticalAlign: "top",
+      boxSizing: "border-box",
+      p: 0,
+      m: 0,
+      boxShadow: (t) => t.palette.mode === "dark" ? "0 2px 10px rgba(0,0,0,0.28)" : "0 4px 14px rgba(15,23,42,0.1)",
+      transition: "box-shadow 0.22s ease, transform 0.22s ease",
+      "&:hover": {
+        boxShadow: (t) => t.palette.mode === "dark" ? "0 10px 28px rgba(0,0,0,0.45)" : "0 12px 32px rgba(15,23,42,0.18)",
+        transform: "translateY(-2px)",
+        "& img": { transform: "scale(1.08)", borderColor: "primary.main", filter: "brightness(1.04)" }
+      },
+      "&:active": { transform: "translateY(0)" },
+      "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 }
+    };
+  }
+  function buildGridTriggerSx() {
+    return {
+      position: "relative",
+      display: "block",
+      width: "100%",
+      height: "100%",
+      minHeight: 0,
+      borderRadius: 1,
+      overflow: "hidden",
+      cursor: "zoom-in",
+      outline: "none",
+      p: 0,
+      m: 0,
+      "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 }
+    };
   }
 
-  function openLightboxInline(opts) {
-    const d = opts || {};
-    let src = d.src || "";
-    if (!src && d.root) {
-      const svg = d.root.querySelector ? d.root.querySelector("svg") : null;
-      src = svgElementToDataUrl(svg, d);
-    }
-    if (!src) return;
-    document.dispatchEvent(new CustomEvent("isa-lb-zoom-inline-open", {
-      detail: Object.assign({}, d, { src: src }),
-    }));
-  }
-
-  function LightboxZoomInline({
-    ns,
-    children,
-    caption,
-    alt,
-    className,
-    sx,
-    fullPage = false,
-  }) {
-    const { useState, useRef, useCallback } = getReact();
-    const { Box } = getMaterialUI();
-    const UI = resolveUi(ns);
-    const containerRef = useRef(null);
-    const [open, setOpen] = useState(false);
-    const [slides, setSlides] = useState([]);
-
-    const onExpand = useCallback(function () {
-      const svg = containerRef.current && containerRef.current.querySelector("svg");
-      if (!svg) return;
-      const src = svgElementToDataUrl(svg);
-      setSlides([{ src: src, alt: alt || caption || "Diagrama", caption: caption }]);
-      setOpen(true);
-    }, [alt, caption]);
-
-    return React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(
-        Box,
-        {
-          ref: containerRef,
-          className: "isa-lb-zoom-inline " + (className || ""),
-          sx: Object.assign({ position: "relative" }, sx || {}),
-        },
-        children,
-        React.createElement(
-          Box,
-          {
-            className: "isa-lb-zoom-inline__expand",
-            role: "button",
-            tabIndex: 0,
-            "aria-label": "Ampliar diagrama",
-            title: "Ampliar (zoom/pan)",
-            onClick: onExpand,
-            onKeyDown: function (e) {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onExpand();
-              }
-            },
-          },
-          React.createElement(UI.Icon, { icon: "mdi:arrow-expand", size: 18 }),
-        ),
-      ),
-      React.createElement(LightboxZoomDialog, {
-        ns: ns,
-        open: open,
-        onClose: function () { setOpen(false); },
-        slides: slides,
-        alt: alt,
-        fullPage: fullPage,
-      }),
-    );
-  }
-
-  function LightboxZoomInlineHost({ ns }) {
-    const { useState, useEffect } = getReact();
-    const [state, setState] = useState({ open: false, slides: [], ns: ns || "ISA" });
-
-    useEffect(function () {
-      function onOpen(e) {
-        const d = e.detail || {};
-        if (!d.src) return;
-        setState({
-          open: true,
-          slides: [{ src: d.src, alt: d.alt || d.caption || "Diagrama", caption: d.caption }],
-          ns: d.ns || ns || "ISA",
-        });
-      }
-      document.addEventListener("isa-lb-zoom-inline-open", onOpen);
-      return function () { document.removeEventListener("isa-lb-zoom-inline-open", onOpen); };
-    }, [ns]);
-
-    return React.createElement(LightboxZoomDialog, {
-      ns: state.ns,
-      open: state.open,
-      onClose: function () { setState(function (s) { return Object.assign({}, s, { open: false }); }); },
-      slides: state.slides,
-    });
-  }
-
+  // src/LightboxZoomImage.jsx
+  var { useState: useState3, useMemo: useMemo2 } = getReact();
   function LightboxZoomImage({
     ns,
     src,
@@ -1308,78 +553,147 @@ function GalleryDots({ count, index, onSelect }) {
     gallery,
     startIndex = 0,
     variant = "thumb",
-    thumbSize = DEFAULT_THUMB_SIZE,
+    thumbSize = DEFAULT_THUMB_SIZE
   }) {
-    const { useState, useMemo } = getReact();
     const { Box } = getMaterialUI();
     const isGrid = variant === "grid";
-    const thumbSx = useMemo(() => (isGrid ? buildGridThumbSx() : buildThumbSx(thumbSize)), [isGrid, thumbSize]);
-    const thumbTriggerSx = useMemo(() => (isGrid ? buildGridTriggerSx() : buildThumbTriggerSx(thumbSize)), [isGrid, thumbSize]);
-
-    const slides = useMemo(() => {
+    const thumbSx = useMemo2(() => isGrid ? buildGridThumbSx() : buildThumbSx(thumbSize), [isGrid, thumbSize]);
+    const thumbTriggerSx = useMemo2(() => isGrid ? buildGridTriggerSx() : buildThumbTriggerSx(thumbSize), [isGrid, thumbSize]);
+    const slides = useMemo2(() => {
       if (Array.isArray(gallery) && gallery.length) return gallery;
       return [{ src, alt, caption }];
     }, [gallery, src, alt, caption]);
-
-    const initial = useMemo(() => {
+    const initial = useMemo2(() => {
       if (!Array.isArray(gallery) || !gallery.length) return 0;
       const i = gallery.findIndex((g) => g.src === src);
       return i >= 0 ? i : startIndex;
     }, [gallery, src, startIndex]);
-
-    const [open, setOpen] = useState(false);
-
-    return React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(
-        Box,
-        {
-          role: "button",
-          tabIndex: 0,
-          "aria-label": "Ampliar imagen: " + (alt || caption || "evidencia"),
-          onClick: () => setOpen(true),
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen(true);
-            }
-          },
-          sx: thumbTriggerSx,
+    const [open, setOpen] = useState3(false);
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+      Box,
+      {
+        role: "button",
+        tabIndex: 0,
+        "aria-label": "Ampliar imagen: " + (alt || caption || "evidencia"),
+        onClick: () => setOpen(true),
+        onKeyDown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen(true);
+          }
         },
-        React.createElement(Box, {
-          component: "img",
-          src,
-          alt,
-          loading: "lazy",
-          sx: Object.assign({}, thumbSx, sx || {}),
-        }),
-      ),
-      React.createElement(LightboxZoomDialog, {
-        ns,
-        open,
-        onClose: () => setOpen(false),
-        slides,
-        startIndex: initial,
-        alt,
-      }),
+        sx: thumbTriggerSx
+      },
+      /* @__PURE__ */ React.createElement(Box, { component: "img", src, alt, loading: "lazy", sx: { ...thumbSx, ...sx } })
+    ), /* @__PURE__ */ React.createElement(LightboxZoomDialog, { ns, open, onClose: () => setOpen(false), slides, startIndex: initial, alt }));
+  }
+
+  // src/lib/svg-inline.js
+  function svgElementToDataUrl(svgEl, opts) {
+    if (!svgEl) return "";
+    const clone = svgEl.cloneNode(true);
+    if (!clone.getAttribute("xmlns")) clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    if (opts?.bg) {
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("width", "100%");
+      bg.setAttribute("height", "100%");
+      bg.setAttribute("fill", opts.bg);
+      clone.insertBefore(bg, clone.firstChild);
+    }
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+  }
+  function openLightboxInline(opts) {
+    const d = opts || {};
+    let src = d.src || "";
+    if (!src && d.root) {
+      const svg = d.root.querySelector?.("svg");
+      src = svgElementToDataUrl(svg, d);
+    }
+    if (!src) return;
+    document.dispatchEvent(new CustomEvent("isa-lb-zoom-inline-open", { detail: { ...d, src } }));
+  }
+
+  // src/LightboxZoomInline.jsx
+  var { useState: useState4, useRef: useRef2, useCallback: useCallback3, useEffect: useEffect3 } = getReact();
+  function LightboxZoomInline({ ns, children, caption, alt, className, sx, fullPage = false }) {
+    const { Box } = getMaterialUI();
+    const UI = resolveUi(ns);
+    const containerRef = useRef2(null);
+    const [open, setOpen] = useState4(false);
+    const [slides, setSlides] = useState4([]);
+    const onExpand = useCallback3(() => {
+      const svg = containerRef.current?.querySelector("svg");
+      if (!svg) return;
+      setSlides([{ src: svgElementToDataUrl(svg), alt: alt || caption || "Diagrama", caption }]);
+      setOpen(true);
+    }, [alt, caption]);
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Box, { ref: containerRef, className: "isa-lb-zoom-inline " + (className || ""), sx: { position: "relative", ...sx } }, children, /* @__PURE__ */ React.createElement(
+      Box,
+      {
+        className: "isa-lb-zoom-inline__expand",
+        role: "button",
+        tabIndex: 0,
+        "aria-label": "Ampliar diagrama",
+        title: "Ampliar (zoom/pan)",
+        onClick: onExpand,
+        onKeyDown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onExpand();
+          }
+        }
+      },
+      /* @__PURE__ */ React.createElement(UI.Icon, { icon: "mdi:arrow-expand", size: 18 })
+    )), /* @__PURE__ */ React.createElement(LightboxZoomDialog, { ns, open, onClose: () => setOpen(false), slides, alt, className: fullPage ? "isa-lb-zoom isa-lb-zoom--fullpage" : "isa-lb-zoom" }));
+  }
+  function LightboxZoomInlineHost({ ns }) {
+    const { useState: useState5, useEffect: useEffect4 } = getReact();
+    const [state, setState] = useState5({ open: false, slides: [], ns: ns || "ISA" });
+    useEffect4(() => {
+      const onOpen = (e) => {
+        const d = e.detail || {};
+        if (!d.src) return;
+        setState({
+          open: true,
+          slides: [{ src: d.src, alt: d.alt || d.caption || "Diagrama", caption: d.caption }],
+          ns: d.ns || ns || "ISA"
+        });
+      };
+      document.addEventListener("isa-lb-zoom-inline-open", onOpen);
+      return () => document.removeEventListener("isa-lb-zoom-inline-open", onOpen);
+    }, [ns]);
+    return /* @__PURE__ */ React.createElement(
+      LightboxZoomDialog,
+      {
+        ns: state.ns,
+        open: state.open,
+        onClose: () => setState((s) => ({ ...s, open: false })),
+        slides: state.slides
+      }
     );
   }
 
+  // src/entry-iife.jsx
+  var ZOOM_MIN = STAGE_ZOOM_MIN;
+  var ZOOM_MAX = STAGE_ZOOM_MAX;
+  var PAN_STEP = 40;
   globalThis.ISAComponents = globalThis.ISAComponents || {};
   globalThis.ISAComponents.LightboxZoom = {
     LightboxZoomDialog,
     LightboxZoomImage,
     LightboxZoomInline,
     LightboxZoomInlineHost,
+    LightboxZoomStage,
     useLightboxZoom,
+    useStageTransform,
     svgElementToDataUrl,
     openLightboxInline,
     ZOOM_MIN,
     ZOOM_MAX,
     PAN_STEP,
+    STAGE_SPOT_ZOOM,
     ImageLightboxDialog: LightboxZoomDialog,
     LightboxImage: LightboxZoomImage,
-    useImageLightboxZoom: useLightboxZoom,
+    useImageLightboxZoom: useLightboxZoom
   };
 })();

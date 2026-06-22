@@ -1,5 +1,5 @@
 /** Pin jsDelivr front-shared + rutas del paquete lightbox. */
-export const PIN = "13629aa";
+export const PIN = "7c00390";
 
 const isDevHost =
   typeof location !== "undefined" && /localhost|127\.0\.0\.1|\[::1\]/.test(location.hostname);
@@ -19,7 +19,7 @@ export const bootHelperUrl = isDevHost
 
 /* @isa-lightbox-boot:start */
 /** @jeff-aporta/lightbox-zoom — pin: sync-component-refs.mjs */
-export const LIGHTBOX_ZOOM_REF = "eb1db1e";
+export const LIGHTBOX_ZOOM_REF = "724fac9";
 
 export function lightboxZoomBase() {
   const base = document.querySelector("base")?.href || location.href;

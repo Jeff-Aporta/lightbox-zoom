@@ -60,8 +60,8 @@ export function ApiPage() {
       React.createElement(
         "pre",
         null,
-        `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@8e19b71/cdn/lightbox-zoom.min.css" />
-<script defer src="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@8e19b71/cdn/lightbox-zoom.min.js"></script>`,
+        `<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@eb1db1e/cdn/lightbox-zoom.min.css" />
+<script defer src="https://cdn.jsdelivr.net/gh/Jeff-Aporta/lightbox-zoom@eb1db1e/cdn/lightbox-zoom.min.js"></script>`,
       ),
     ),
   );

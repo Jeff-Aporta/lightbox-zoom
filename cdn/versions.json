@@ -3,7 +3,7 @@
   "slug": "lightbox-zoom",
   "repo": "Jeff-Aporta/lightbox-zoom",
   "cdnPath": "cdn",
-  "componentRef": "7770b03",
+  "componentRef": "8c55c6b",
   "refExport": "LIGHTBOX_ZOOM_REF",
   "note": "Pin jsDelivr lightbox-zoom@componentRef. Actualizar con sync-component-refs.mjs --from-git --component lightbox"
 }

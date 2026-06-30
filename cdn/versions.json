@@ -3,7 +3,7 @@
   "slug": "lightbox-zoom",
   "repo": "Jeff-Aporta/lightbox-zoom",
   "cdnPath": "cdn",
-  "componentRef": "release-2026-06-30",
+  "componentRef": "549d6b6",
   "refExport": "LIGHTBOX_ZOOM_REF",
   "note": "Pin jsDelivr lightbox-zoom@componentRef. componentRef acepta SHA o tag release-YYYY-MM-DD — preferir tag para releases. Actualizar con sync-component-refs.mjs --from-git --component lightbox"
 }
